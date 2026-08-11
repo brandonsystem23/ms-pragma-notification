@@ -1,17 +1,14 @@
 package com.plazoleta.notification_service.domain.service;
 
-import com.plazoleta.notification_service.application.dto.response.NotificationResponse;
 import com.plazoleta.notification_service.domain.exception.InvalidTokenException;
 import com.plazoleta.notification_service.domain.exception.PinStorageException;
 import com.plazoleta.notification_service.domain.exception.UnauthorizedRoleException;
-import com.plazoleta.notification_service.domain.model.NotificationChannel;
-import com.plazoleta.notification_service.domain.model.NotificationMessage;
-import com.plazoleta.notification_service.domain.model.auth.AuthSession;
+import com.plazoleta.notification_service.domain.model.Notification;
+import com.plazoleta.notification_service.domain.model.AuthSession;
+import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.plazoleta.notification_service.domain.port.in.SendNotificationUseCase;
-import com.plazoleta.notification_service.domain.port.out.AuthSessionPort;
-import com.plazoleta.notification_service.domain.port.out.NotificationSenderPort;
-import com.plazoleta.notification_service.domain.port.out.PinRepositoryPort;
-import com.plazoleta.notification_service.infrastructure.output.notification.NotificationSenderResolver;
+import com.plazoleta.notification_service.domain.port.out.RedisPort;
+import com.plazoleta.notification_service.infrastructure.output.whatsapp.WhatsappNotificationSenderAdapter;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -20,20 +17,18 @@ public class SendNotificationService implements SendNotificationUseCase {
 
     private static final String EMPLOYEE_ROLE = "EMPLEADO";
 
-    private final AuthSessionPort authSessionPort;
-    private final PinRepositoryPort pinRepositoryPort;
-    private final NotificationSenderResolver notificationSenderResolver;
+    private final RedisPort redisPort;
+    private final WhatsappNotificationSenderAdapter senderAdapter;
     private final PinGenerator pinGenerator;
 
 
     @Override
-    public Mono<NotificationResponse> send(String token, Integer type, String phone) {
-        NotificationChannel channel = NotificationChannel.fromType(type);
+    public Mono<Notification> send(String token, String phone) {
 
-        return authSessionPort.findByToken(token)
+        return redisPort.findByToken(token)
                 .switchIfEmpty(Mono.error(new InvalidTokenException()))
                 .flatMap(session -> validateEmployeeRole(session)
-                        .then(generateStoreAndSend(channel, phone)));
+                        .then(generateStoreAndSend(phone, session.numberDocument())));
     }
 
     private Mono<Void> validateEmployeeRole(AuthSession session) {
@@ -43,30 +38,20 @@ public class SendNotificationService implements SendNotificationUseCase {
         return Mono.empty();
     }
 
-    private Mono<NotificationResponse> generateStoreAndSend(
-            NotificationChannel channel,
-            String phone
-    ) {
+    private Mono<Notification> generateStoreAndSend(String phone, String numberDocument) {
         String pin = pinGenerator.generate();
 
-        String message = "Tu pedido está listo. Tu pin de seguridad es: " + pin;
-
-        NotificationMessage notificationMessage = NotificationMessage.builder()
+        NotificationData notificationData = NotificationData.builder()
                 .phone(phone)
-                .message(message)
-                .channel(channel)
+                .pin(pin)
                 .build();
 
-        NotificationSenderPort sender = notificationSenderResolver.resolve(channel);
-
-        return pinRepositoryPort.save(phone, pin, notificationMessage)
+        return redisPort.save(numberDocument, pin, notificationData)
                 .switchIfEmpty(Mono.error(new PinStorageException()))
-                .then(sender.send(notificationMessage))
-                .thenReturn(NotificationResponse.builder()
+                .then(senderAdapter.send(notificationData))
+                .thenReturn(Notification.builder()
                         .message("Notificación enviada correctamente")
-                        .channel(channel.name())
-                        .destination(phone)
-                        .pin(pin)
+                        .phone(phone)
                         .build());
     }
 }

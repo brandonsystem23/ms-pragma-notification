@@ -1,4 +1,4 @@
-package com.plazoleta.notification_service.infrastructure.security.session;
+package com.plazoleta.notification_service.infrastructure.util;
 
 public final class BearerTokenExtractor {
 

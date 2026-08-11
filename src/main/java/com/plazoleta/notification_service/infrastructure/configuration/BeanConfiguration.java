@@ -1,11 +1,10 @@
 package com.plazoleta.notification_service.infrastructure.configuration;
 
 import com.plazoleta.notification_service.domain.port.in.SendNotificationUseCase;
-import com.plazoleta.notification_service.domain.port.out.AuthSessionPort;
-import com.plazoleta.notification_service.domain.port.out.PinRepositoryPort;
+import com.plazoleta.notification_service.domain.port.out.RedisPort;
 import com.plazoleta.notification_service.domain.service.PinGenerator;
 import com.plazoleta.notification_service.domain.service.SendNotificationService;
-import com.plazoleta.notification_service.infrastructure.output.notification.NotificationSenderResolver;
+import com.plazoleta.notification_service.infrastructure.output.whatsapp.WhatsappNotificationSenderAdapter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,15 +21,13 @@ public class BeanConfiguration {
 
     @Bean
     public SendNotificationUseCase sendNotificationUseCase(
-            AuthSessionPort authSessionPort,
-            PinRepositoryPort pinRepositoryPort,
-            NotificationSenderResolver notificationSenderResolver,
+            RedisPort authSessionPort,
+            WhatsappNotificationSenderAdapter mockWhatsappNotificationSenderAdapter,
             PinGenerator pinGenerator
     ) {
         return new SendNotificationService(
                 authSessionPort,
-                pinRepositoryPort,
-                notificationSenderResolver,
+                mockWhatsappNotificationSenderAdapter,
                 pinGenerator
         );
     }

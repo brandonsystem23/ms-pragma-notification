@@ -1,16 +1,10 @@
 package com.plazoleta.notification_service.application.dto.request;
 
-import com.plazoleta.notification_service.application.validation.Pin;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record SendNotificationRequest(
-
-        @NotNull(message = "El type es obligatorio")
-        @Pin
-        Integer type,
 
         @NotBlank(message = "El phone es obligatorio")
         @Size(

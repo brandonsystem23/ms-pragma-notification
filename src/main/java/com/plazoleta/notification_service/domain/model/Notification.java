@@ -3,9 +3,10 @@ package com.plazoleta.notification_service.domain.model;
 import lombok.Builder;
 
 @Builder
-public record NotificationMessage(
+public record Notification(
+
         String phone,
-        String message,
-        NotificationChannel channel
+
+        String message
 ) {
 }

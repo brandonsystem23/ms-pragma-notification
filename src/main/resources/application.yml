@@ -18,7 +18,7 @@ springdoc:
 
 notification:
   pin:
-    expiration-minutes: 15
+    expiration-minutes: 30
     length: 6
 
 logging:

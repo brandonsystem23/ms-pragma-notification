@@ -4,9 +4,9 @@ import lombok.Builder;
 
 @Builder
 public record NotificationResponse(
-        String message,
-        String channel,
-        String destination,
-        String pin
+
+        String phone,
+
+        String message
 ) {
 }
