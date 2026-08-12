@@ -1,7 +1,7 @@
 package com.plazoleta.notification_service.infrastructure.output.vonage;
 
 import com.plazoleta.notification_service.domain.model.NotificationData;
-import com.plazoleta.notification_service.domain.port.out.VonageNotificationSenderPort;
+import com.plazoleta.notification_service.domain.port.out.VonageSenderPort;
 import com.plazoleta.notification_service.infrastructure.util.Utils;
 import com.vonage.client.VonageClient;
 import com.vonage.client.messages.MessageResponse;
@@ -15,7 +15,7 @@ import reactor.core.scheduler.Schedulers;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class VonageNotificationSenderAdapter implements VonageNotificationSenderPort {
+public class VonageSenderAdapter implements VonageSenderPort {
 
     private final VonageClient vonageClient;
 
@@ -41,12 +41,10 @@ public class VonageNotificationSenderAdapter implements VonageNotificationSender
                 })
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnError(error ->
-                        log.error(
-                                "Error enviando SMS a {}: {}",
-                                phone,
-                                error.getMessage(),
-                                error
-                        )
+                        log.error("Error enviando SMS a {}: {}", phone, error.getMessage(), error)
+                )
+                .onErrorMap(error ->
+                        new IllegalStateException("No fue posible enviar la notificación")
                 )
                 .then();
     }

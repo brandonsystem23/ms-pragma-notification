@@ -1,7 +1,7 @@
 package com.plazoleta.notification_service.infrastructure.input.rest;
 
+import com.plazoleta.notification_service.domain.exception.InvalidPinException;
 import com.plazoleta.notification_service.domain.exception.InvalidTokenException;
-import com.plazoleta.notification_service.domain.exception.NotificationSendException;
 import com.plazoleta.notification_service.domain.exception.PinStorageException;
 import com.plazoleta.notification_service.domain.exception.UnauthorizedRoleException;
 import org.springframework.http.HttpStatus;
@@ -29,9 +29,14 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), exchange, List.of());
     }
 
-    @ExceptionHandler({NotificationSendException.class, PinStorageException.class})
-    public ResponseEntity<ErrorResponse> handleNotificationError(RuntimeException ex, ServerWebExchange exchange) {
-        return buildResponse(HttpStatus.BAD_GATEWAY, ex.getMessage(), exchange, List.of());
+    @ExceptionHandler({PinStorageException.class})
+    public ResponseEntity<ErrorResponse> handlePinStorageError(PinStorageException ex, ServerWebExchange exchange) {
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), exchange, List.of());
+    }
+
+    @ExceptionHandler({InvalidPinException.class})
+    public ResponseEntity<ErrorResponse> handleInvalidPinError(InvalidPinException ex, ServerWebExchange exchange) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), exchange, List.of());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

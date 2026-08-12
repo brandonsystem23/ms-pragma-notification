@@ -8,7 +8,7 @@ import com.plazoleta.notification_service.domain.model.AuthSession;
 import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.plazoleta.notification_service.domain.port.in.SendNotificationUseCase;
 import com.plazoleta.notification_service.domain.port.out.RedisPort;
-import com.plazoleta.notification_service.infrastructure.output.vonage.VonageNotificationSenderAdapter;
+import com.plazoleta.notification_service.infrastructure.output.vonage.VonageSenderAdapter;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -18,7 +18,7 @@ public class SendNotificationService implements SendNotificationUseCase {
     private static final String EMPLOYEE_ROLE = "EMPLEADO";
 
     private final RedisPort redisPort;
-    private final VonageNotificationSenderAdapter senderAdapter;
+    private final VonageSenderAdapter vonageAdapter;
     private final PinGenerator pinGenerator;
 
 
@@ -38,7 +38,10 @@ public class SendNotificationService implements SendNotificationUseCase {
         return Mono.empty();
     }
 
-    private Mono<Notification> generateStoreAndSend(String phone, String numberDocument) {
+    private Mono<Notification> generateStoreAndSend(
+            String phone,
+            String numberDocument) {
+
         String pin = pinGenerator.generate();
 
         NotificationData notificationData = NotificationData.builder()
@@ -46,9 +49,9 @@ public class SendNotificationService implements SendNotificationUseCase {
                 .pin(pin)
                 .build();
 
-        return redisPort.save(numberDocument, pin, notificationData)
+        return vonageAdapter.send(notificationData)
+                .then(redisPort.save(numberDocument, pin, notificationData))
                 .switchIfEmpty(Mono.error(new PinStorageException()))
-                .then(senderAdapter.send(notificationData))
                 .thenReturn(Notification.builder()
                         .message("Notificación enviada correctamente")
                         .phone(phone)
