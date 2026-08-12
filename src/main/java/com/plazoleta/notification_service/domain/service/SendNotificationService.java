@@ -8,7 +8,7 @@ import com.plazoleta.notification_service.domain.model.AuthSession;
 import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.plazoleta.notification_service.domain.port.in.SendNotificationUseCase;
 import com.plazoleta.notification_service.domain.port.out.RedisPort;
-import com.plazoleta.notification_service.infrastructure.output.vonage.VonageSenderAdapter;
+import com.plazoleta.notification_service.domain.port.out.VonageSenderPort;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -18,7 +18,7 @@ public class SendNotificationService implements SendNotificationUseCase {
     private static final String EMPLOYEE_ROLE = "EMPLEADO";
 
     private final RedisPort redisPort;
-    private final VonageSenderAdapter vonageAdapter;
+    private final VonageSenderPort vonageSenderPort;
     private final PinGenerator pinGenerator;
 
 
@@ -28,7 +28,7 @@ public class SendNotificationService implements SendNotificationUseCase {
         return redisPort.findByToken(token)
                 .switchIfEmpty(Mono.error(new InvalidTokenException()))
                 .flatMap(session -> validateEmployeeRole(session)
-                        .then(generateStoreAndSend(phone, session.numberDocument())));
+                        .then(Mono.defer(() -> generateStoreAndSend(phone, session.numberDocument()))));
     }
 
     private Mono<Void> validateEmployeeRole(AuthSession session) {
@@ -49,8 +49,8 @@ public class SendNotificationService implements SendNotificationUseCase {
                 .pin(pin)
                 .build();
 
-        return vonageAdapter.send(notificationData)
-                .then(redisPort.save(numberDocument, pin, notificationData))
+        return vonageSenderPort.send(notificationData)
+                .then(Mono.defer(() -> redisPort.save(numberDocument, pin, notificationData)))
                 .switchIfEmpty(Mono.error(new PinStorageException()))
                 .thenReturn(Notification.builder()
                         .message("Notificación enviada correctamente")

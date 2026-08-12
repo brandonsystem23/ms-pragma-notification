@@ -27,5 +27,5 @@ logging:
 
 vonage:
   api-key: ${VONAGE_API_KEY:0ecb883f}
-  api-secret: ${VONAGE_API_SECRET:W5eXGrQ%FQjkHNBRANDON}
+  api-secret: ${VONAGE_API_SECRET:W5eXGrQ%FQjkHN}
 

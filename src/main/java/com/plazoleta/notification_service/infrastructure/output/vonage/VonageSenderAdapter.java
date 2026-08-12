@@ -23,7 +23,7 @@ public class VonageSenderAdapter implements VonageSenderPort {
     public Mono<Void> send(NotificationData notificationData) {
 
         String phone = Utils.normalizePhone(notificationData.phone());
-        String message = String.format("Tu PIN de seguridad es %s", notificationData.pin());
+        String message = String.format("Recoge tu pedido con el PIN %s", notificationData.pin());
 
         return Mono.fromCallable(() -> {
                     MessageResponse response = vonageClient.getMessagesClient()

@@ -195,11 +195,11 @@
 								</exclude>
 
 								<exclude>
-									com/plazoleta/users_service/application/dto/**
+									com/plazoleta/notification_service/application/dto/**
 								</exclude>
 
 								<exclude>
-									com/plazoleta/users_service/application/mapper/**
+									com/plazoleta/notification_service/application/mapper/**
 								</exclude>
 
 								<exclude>
@@ -242,7 +242,7 @@
 										<limit>
 											<counter>LINE</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.01</minimum>
+											<minimum>0.95</minimum>
 										</limit>
 
 									</limits>
