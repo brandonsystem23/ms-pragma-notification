@@ -10,17 +10,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
-import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler handler;
+
     private ServerWebExchange exchange;
 
     @BeforeEach
@@ -140,34 +143,44 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void shouldHandleValidationErrors() throws Exception {
-        Object target = new TestRequest();
-        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(target, "testRequest");
-        bindingResult.addError(new FieldError("testRequest", "phone", "El phone es obligatorio"));
-        bindingResult.addError(new FieldError("testRequest", "phone", "El phone solo puede contener números y opcionalmente iniciar con +"));
+    void shouldHandleValidationErrors() {
+        WebExchangeBindException exception = mock(WebExchangeBindException.class);
 
-        var method = TestController.class.getDeclaredMethod("testMethod", TestRequest.class);
-
-        WebExchangeBindException exception = new WebExchangeBindException(
-                new org.springframework.core.MethodParameter(method, 0),
-                bindingResult
+        FieldError phoneRequiredError = new FieldError(
+                "testRequest",
+                "phone",
+                "El phone es obligatorio"
         );
+
+        FieldError phoneFormatError = new FieldError(
+                "testRequest",
+                "phone",
+                "El phone solo puede contener números y opcionalmente iniciar con +"
+        );
+
+        when(exception.getFieldErrors())
+                .thenReturn(List.of(phoneRequiredError, phoneFormatError));
 
         ResponseEntity<ErrorResponse> responseEntity =
                 handler.handleValidationErrors(exception, exchange);
 
         ErrorResponse response = getBody(responseEntity);
 
+        assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
         assertEquals(HttpStatus.BAD_REQUEST.value(), response.status());
         assertEquals("Bad Request", response.error());
         assertEquals("Error de validación", response.message());
         assertEquals("/api/v1/notifications/send", response.path());
         assertNotNull(response.timestamp());
-        assertNotNull(response.details());
-        assertEquals(2, response.details().size());
-        assertTrue(response.details().contains("phone: El phone es obligatorio"));
-        assertTrue(response.details().contains("phone: El phone solo puede contener números y opcionalmente iniciar con +"));
+
+        assertEquals(
+                List.of(
+                        "phone: El phone es obligatorio",
+                        "phone: El phone solo puede contener números y opcionalmente iniciar con +"
+                ),
+                response.details()
+        );
     }
 
     private ErrorResponse getBody(ResponseEntity<ErrorResponse> responseEntity) {
@@ -176,20 +189,4 @@ class GlobalExceptionHandlerTest {
         return body;
     }
 
-    static class TestController {
-        public void testMethod(@ModelAttribute TestRequest request) {
-        }
-    }
-
-    static class TestRequest {
-        private String phone;
-
-        public String getPhone() {
-            return phone;
-        }
-
-        public void setPhone(String phone) {
-            this.phone = phone;
-        }
-    }
 }

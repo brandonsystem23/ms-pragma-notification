@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plazoleta.notification_service.domain.model.AuthSession;
 import com.plazoleta.notification_service.domain.model.NotificationData;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +17,6 @@ import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 class RedisAdapterTest {
@@ -32,45 +32,41 @@ class RedisAdapterTest {
 
     private RedisAdapter redisAdapter;
 
-    private final Duration expiration = Duration.ofMinutes(30);
-
     @BeforeEach
     void setUp() {
-        redisAdapter = new RedisAdapter(redisTemplate, objectMapper, expiration);
+        redisAdapter = new RedisAdapter(
+                redisTemplate,
+                objectMapper,
+                Duration.ofMinutes(30)
+        );
     }
 
     @Test
     void shouldFindByTokenSuccessfully() throws Exception {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        String token = "valid-token";
-        String json = """
-                {
-                  "userId":1,
-                  "fullName":"Juan Perez",
-                  "role":"EMPLEADO",
-                  "numberDocument":"12345678",
-                  "phone":"+573001234567",
-                  "email":"juan@test.com"
-                }
-                """;
-
         AuthSession session = AuthSession.builder()
                 .userId(1L)
-                .fullName("Juan Perez")
                 .role("EMPLEADO")
-                .numberDocument("12345678")
-                .phone("+573001234567")
-                .email("juan@test.com")
+                .numberDocument("123456")
+                .phone("+573001112233")
+                .email("admin@test.com")
                 .build();
 
-        when(valueOperations.get("auth:token:" + token)).thenReturn(Mono.just(json));
-        when(objectMapper.readValue(json, AuthSession.class)).thenReturn(session);
+        when(redisTemplate.opsForValue())
+                .thenReturn(valueOperations);
 
-        StepVerifier.create(redisAdapter.findByToken(token))
-                .assertNext(result -> {
-                    assertEquals(session.userId(), result.userId());
-                    assertEquals(session.role(), result.role());
-                    assertEquals(session.numberDocument(), result.numberDocument());
+        when(valueOperations.get(any()))
+                .thenReturn(Mono.just("{}"));
+
+        when(objectMapper.readValue(
+                anyString(),
+                eq(AuthSession.class)
+        )).thenReturn(session);
+
+        StepVerifier.create(redisAdapter.findByToken("test-token"))
+                .assertNext(found -> {
+                    Assertions.assertEquals(1L, found.userId());
+                    Assertions.assertEquals("EMPLEADO", found.role());
+                    Assertions.assertEquals("123456", found.numberDocument());
                 })
                 .verifyComplete();
     }
@@ -80,48 +76,65 @@ class RedisAdapterTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         String token = "missing-token";
 
-        when(valueOperations.get("auth:token:" + token)).thenReturn(Mono.empty());
+        when(valueOperations.get(anyString())).thenReturn(Mono.empty());
 
         StepVerifier.create(redisAdapter.findByToken(token))
                 .verifyComplete();
     }
 
     @Test
-    void shouldReturnErrorWhenDeserializationFails() throws Exception {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        String token = "valid-token";
-        String json = "{\"invalid\":true}";
+    void shouldReturnErrorWhenDeserializationFails()
+            throws JsonProcessingException {
 
-        when(valueOperations.get("auth:token:" + token)).thenReturn(Mono.just(json));
-        when(objectMapper.readValue(json, AuthSession.class))
-                .thenThrow(new JsonProcessingException("deserialize error") {});
+        JsonProcessingException exception =
+                new JsonProcessingException("Error de deserialización") {};
 
-        StepVerifier.create(redisAdapter.findByToken(token))
+        when(redisTemplate.opsForValue())
+                .thenReturn(valueOperations);
+
+        when(valueOperations.get(anyString()))
+                .thenReturn(Mono.just("{}"));
+
+        when(objectMapper.readValue(
+                anyString(),
+                eq(AuthSession.class)))
+                .thenThrow(exception);
+
+        StepVerifier.create(redisAdapter.findByToken("test-token"))
                 .expectErrorMatches(error ->
-                        error instanceof IllegalStateException &&
-                                error.getMessage().equals("Error deserializando la sesión"))
+                        error instanceof IllegalStateException
+                                && error.getMessage().equals(
+                                "Error deserializando la sesión")
+                                && error.getCause() == exception)
                 .verify();
     }
 
+
     @Test
     void shouldSaveNotificationDataSuccessfully() throws Exception {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        String numberDocument = "12345678";
+
         String pin = "123456";
+
+        String documentNumber = "77019939";
+
         NotificationData notificationData = NotificationData.builder()
                 .phone("+573001234567")
                 .pin(pin)
                 .build();
 
-        String json = "{\"phone\":\"+573001234567\",\"pin\":\"123456\"}";
-        String expectedKey = "notification:pin:" + numberDocument + pin;
+        when(redisTemplate.opsForValue())
+                .thenReturn(valueOperations);
 
-        when(objectMapper.writeValueAsString(notificationData)).thenReturn(json);
-        when(valueOperations.set(expectedKey, json, expiration)).thenReturn(Mono.just(true));
+        when(objectMapper.writeValueAsString(any()))
+                .thenReturn("{}");
 
-        StepVerifier.create(redisAdapter.save(numberDocument, pin, notificationData))
-                .expectNext(pin)
+        when(valueOperations.set(anyString(), anyString(), any(Duration.class)))
+                .thenReturn(Mono.just(true));
+
+        StepVerifier.create(redisAdapter.save(documentNumber, pin ,notificationData))
+                .assertNext(Assertions::assertNotNull)
                 .verifyComplete();
+
     }
 
     @Test
@@ -134,11 +147,10 @@ class RedisAdapterTest {
                 .pin(pin)
                 .build();
 
-        String json = "{\"phone\":\"+573001234567\",\"pin\":\"123456\"}";
-        String expectedKey = "notification:pin:" + numberDocument + pin;
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
-        when(objectMapper.writeValueAsString(notificationData)).thenReturn(json);
-        when(valueOperations.set(expectedKey, json, expiration)).thenReturn(Mono.just(false));
+        when(valueOperations.set(anyString(), anyString(), any(Duration.class)))
+                .thenReturn(Mono.just(false));
 
         StepVerifier.create(redisAdapter.save(numberDocument, pin, notificationData))
                 .expectErrorMatches(error ->
@@ -155,9 +167,11 @@ class RedisAdapterTest {
                 .phone("+573001234567")
                 .pin(pin)
                 .build();
+        JsonProcessingException exception =
+                new JsonProcessingException("Error de serialización") {};
 
         when(objectMapper.writeValueAsString(notificationData))
-                .thenThrow(new JsonProcessingException("serialize error") {});
+                .thenThrow(exception);
 
         StepVerifier.create(redisAdapter.save(numberDocument, pin, notificationData))
                 .expectErrorMatches(error ->

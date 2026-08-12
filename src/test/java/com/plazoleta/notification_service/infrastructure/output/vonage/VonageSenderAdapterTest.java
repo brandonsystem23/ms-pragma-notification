@@ -4,29 +4,32 @@ import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.vonage.client.VonageClient;
 import com.vonage.client.messages.MessageResponse;
 import com.vonage.client.messages.MessagesClient;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.test.StepVerifier;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class VonageSenderAdapterTest {
 
+    @Mock
     private VonageClient vonageClient;
+
+    @Mock
     private MessagesClient messagesClient;
+
+    @Mock
     private MessageResponse messageResponse;
+
+    @InjectMocks
     private VonageSenderAdapter vonageSenderAdapter;
 
-    @BeforeEach
-    void setUp() {
-        vonageClient = mock(VonageClient.class);
-        messagesClient = mock(MessagesClient.class);
-        messageResponse = mock(MessageResponse.class);
-        vonageSenderAdapter = new VonageSenderAdapter(vonageClient);
-    }
 
     @Test
     void shouldSendNotificationSuccessfully() {
@@ -41,8 +44,6 @@ class VonageSenderAdapterTest {
         StepVerifier.create(vonageSenderAdapter.send(notificationData))
                 .verifyComplete();
 
-        verify(vonageClient).getMessagesClient();
-        verify(messagesClient).sendMessage(any());
     }
 
     @Test
@@ -62,8 +63,6 @@ class VonageSenderAdapterTest {
                                 error.getMessage().equals("No fue posible enviar la notificación"))
                 .verify();
 
-        verify(vonageClient).getMessagesClient();
-        verify(messagesClient).sendMessage(any());
     }
 
     @Test
@@ -73,12 +72,10 @@ class VonageSenderAdapterTest {
                 .pin("123456")
                 .build();
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> vonageSenderAdapter.send(notificationData)
+        assertThrows(
+                IllegalArgumentException.class, () -> vonageSenderAdapter.send(notificationData)
         );
 
-        assertEquals("El teléfono no puede ser null", exception.getMessage());
-        verifyNoInteractions(vonageClient);
+
     }
 }

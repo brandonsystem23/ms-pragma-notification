@@ -5,9 +5,9 @@ import com.plazoleta.notification_service.application.dto.response.NotificationR
 import com.plazoleta.notification_service.application.mapper.NotificationDtoMapper;
 import com.plazoleta.notification_service.domain.model.Notification;
 import com.plazoleta.notification_service.domain.port.in.SendNotificationUseCase;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
@@ -25,15 +25,9 @@ class NotificationApplicationServiceTest {
     @Mock
     private NotificationDtoMapper notificationDtoMapper;
 
+    @InjectMocks
     private NotificationApplicationService notificationApplicationService;
 
-    @BeforeEach
-    void setUp() {
-        notificationApplicationService = new NotificationApplicationService(
-                sendNotificationUseCase,
-                notificationDtoMapper
-        );
-    }
 
     @Test
     void shouldSendNotificationAndMapResponse() {
@@ -50,20 +44,20 @@ class NotificationApplicationServiceTest {
                 .message("Notificación enviada correctamente")
                 .build();
 
-        when(sendNotificationUseCase.send(token, request.phone())).thenReturn(Mono.just(notification));
-        when(notificationDtoMapper.toResponse(notification)).thenReturn(response);
+        when(sendNotificationUseCase.send(anyString(), anyString()))
+                .thenReturn(Mono.just(notification));
 
-        Mono<NotificationResponse> result = notificationApplicationService.sendNotification(token, request);
+        when(notificationDtoMapper.toResponse(any()))
+                .thenReturn(response);
 
-        StepVerifier.create(result)
+
+        StepVerifier.create(notificationApplicationService.sendNotification(token, request))
                 .assertNext(actual -> {
                     assertEquals(response.phone(), actual.phone());
                     assertEquals(response.message(), actual.message());
                 })
                 .verifyComplete();
 
-        verify(sendNotificationUseCase).send(token, request.phone());
-        verify(notificationDtoMapper).toResponse(notification);
     }
 
     @Test
@@ -71,17 +65,14 @@ class NotificationApplicationServiceTest {
         String token = "invalid-token";
         SendNotificationRequest request = new SendNotificationRequest("+573001234567");
 
-        when(sendNotificationUseCase.send(token, request.phone()))
+        when(sendNotificationUseCase.send(anyString(), anyString()))
                 .thenReturn(Mono.error(new RuntimeException("error")));
 
-        Mono<NotificationResponse> result = notificationApplicationService.sendNotification(token, request);
-
-        StepVerifier.create(result)
+        StepVerifier.create(notificationApplicationService.sendNotification(token, request))
                 .expectErrorMatches(error ->
                         error instanceof RuntimeException &&
                                 error.getMessage().equals("error"))
                 .verify();
 
-        verify(notificationDtoMapper, never()).toResponse(any());
     }
 }

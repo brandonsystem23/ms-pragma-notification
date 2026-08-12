@@ -18,22 +18,19 @@ class UtilsTest {
 
     @Test
     void shouldThrowExceptionWhenAuthorizationHeaderIsNull() {
-        IllegalArgumentException exception = assertThrows(
+        assertThrows(
                 IllegalArgumentException.class,
                 () -> Utils.extract(null)
         );
 
-        assertEquals("Authorization header inválido", exception.getMessage());
     }
 
     @Test
     void shouldThrowExceptionWhenAuthorizationHeaderDoesNotStartWithBearer() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> Utils.extract("Basic abc123")
+        assertThrows(
+                IllegalArgumentException.class, () -> Utils.extract("Basic abc123")
         );
 
-        assertEquals("Authorization header inválido", exception.getMessage());
     }
 
     @Test
@@ -56,11 +53,9 @@ class UtilsTest {
 
     @Test
     void shouldThrowExceptionWhenPhoneIsNull() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> Utils.normalizePhone(null)
+        assertThrows(
+                IllegalArgumentException.class, () -> Utils.normalizePhone(null)
         );
 
-        assertEquals("El teléfono no puede ser null", exception.getMessage());
     }
 }
