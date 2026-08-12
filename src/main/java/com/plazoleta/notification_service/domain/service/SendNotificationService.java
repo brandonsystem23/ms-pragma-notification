@@ -8,7 +8,7 @@ import com.plazoleta.notification_service.domain.model.AuthSession;
 import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.plazoleta.notification_service.domain.port.in.SendNotificationUseCase;
 import com.plazoleta.notification_service.domain.port.out.RedisPort;
-import com.plazoleta.notification_service.infrastructure.output.whatsapp.WhatsappNotificationSenderAdapter;
+import com.plazoleta.notification_service.infrastructure.output.vonage.VonageNotificationSenderAdapter;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -18,7 +18,7 @@ public class SendNotificationService implements SendNotificationUseCase {
     private static final String EMPLOYEE_ROLE = "EMPLEADO";
 
     private final RedisPort redisPort;
-    private final WhatsappNotificationSenderAdapter senderAdapter;
+    private final VonageNotificationSenderAdapter senderAdapter;
     private final PinGenerator pinGenerator;
 
 

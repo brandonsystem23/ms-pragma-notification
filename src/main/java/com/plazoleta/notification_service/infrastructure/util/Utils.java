@@ -1,10 +1,10 @@
 package com.plazoleta.notification_service.infrastructure.util;
 
-public final class BearerTokenExtractor {
+public final class Utils {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
-    private BearerTokenExtractor() {
+    private Utils() {
     }
 
     public static String extract(String authorizationHeader) {
@@ -13,5 +13,14 @@ public final class BearerTokenExtractor {
         }
 
         return authorizationHeader.substring(BEARER_PREFIX.length());
+    }
+
+    public static String normalizePhone(String phone) {
+
+        if (phone == null) {
+            throw new IllegalArgumentException("El teléfono no puede ser null");
+        }
+
+        return phone.replace("+", "");
     }
 }

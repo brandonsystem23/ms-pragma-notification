@@ -3,7 +3,7 @@ package com.plazoleta.notification_service.infrastructure.input.rest;
 import com.plazoleta.notification_service.application.dto.request.SendNotificationRequest;
 import com.plazoleta.notification_service.application.dto.response.NotificationResponse;
 import com.plazoleta.notification_service.application.service.NotificationApplicationService;
-import com.plazoleta.notification_service.infrastructure.util.BearerTokenExtractor;
+import com.plazoleta.notification_service.infrastructure.util.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,12 +21,12 @@ public class NotificationController {
     private final NotificationApplicationService notificationApplicationService;
 
     @PostMapping("/send")
-    @Operation(summary = "Enviar PIN", description = "Envia PIN por WhatsApp. Requiere rol EMPLEADO")
+    @Operation(summary = "Enviar PIN", description = "Envia PIN por Twilio. Requiere rol EMPLEADO")
     public Mono<NotificationResponse> sendNotification(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
             @Valid @RequestBody SendNotificationRequest request
     ) {
-        String token = BearerTokenExtractor.extract(authorizationHeader);
+        String token = Utils.extract(authorizationHeader);
         return notificationApplicationService.sendNotification(token, request);
     }
 }

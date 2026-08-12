@@ -4,7 +4,7 @@ import com.plazoleta.notification_service.domain.port.in.SendNotificationUseCase
 import com.plazoleta.notification_service.domain.port.out.RedisPort;
 import com.plazoleta.notification_service.domain.service.PinGenerator;
 import com.plazoleta.notification_service.domain.service.SendNotificationService;
-import com.plazoleta.notification_service.infrastructure.output.whatsapp.WhatsappNotificationSenderAdapter;
+import com.plazoleta.notification_service.infrastructure.output.vonage.VonageNotificationSenderAdapter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,12 +22,12 @@ public class BeanConfiguration {
     @Bean
     public SendNotificationUseCase sendNotificationUseCase(
             RedisPort authSessionPort,
-            WhatsappNotificationSenderAdapter mockWhatsappNotificationSenderAdapter,
+            VonageNotificationSenderAdapter twilioNotificationSenderAdapter,
             PinGenerator pinGenerator
     ) {
         return new SendNotificationService(
                 authSessionPort,
-                mockWhatsappNotificationSenderAdapter,
+                twilioNotificationSenderAdapter,
                 pinGenerator
         );
     }
