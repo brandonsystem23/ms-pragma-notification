@@ -8,7 +8,7 @@ public final class DomainErrorMessages {
     public static final String TOKEN_INVALID = "Token inválido o expirado";
     public static final String ROLE_NOT_ALLOWED = "Solo un EMPLEADO puede enviar el PIN";
     public static final String PIN_STORAGE_ERROR = "No se pudo almacenar el PIN";
-    public static final String PHONE_REQUIRED = "El phone es obligatorio";
+    public static final String PHONE_REQUIRED = "El campo phone es obligatorio";
     public static final String PHONE_MAX_LENGTH = "El phone no puede tener más de 13 caracteres";
     public static final String PHONE_INVALID = "El phone solo puede contener números y opcionalmente iniciar con +";
     public static final String PIN_LENGTH_INVALID = "La longitud del PIN debe ser entre 4 y 6";
