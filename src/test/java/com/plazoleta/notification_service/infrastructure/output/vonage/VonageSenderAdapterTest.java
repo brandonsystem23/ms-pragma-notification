@@ -33,7 +33,6 @@ class VonageSenderAdapterTest {
     @InjectMocks
     private VonageSenderAdapter vonageSenderAdapter;
 
-
     @Test
     void shouldSendNotificationSuccessfully() {
         NotificationData notificationData = NotificationData.builder()
