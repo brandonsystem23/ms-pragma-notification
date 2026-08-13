@@ -1,5 +1,8 @@
 package com.plazoleta.notification_service.infrastructure.output.vonage;
 
+import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
+import com.plazoleta.notification_service.domain.exception.DomainErrorMessages;
+import com.plazoleta.notification_service.domain.exception.DomainException;
 import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.vonage.client.VonageClient;
 import com.vonage.client.messages.MessageResponse;
@@ -59,10 +62,10 @@ class VonageSenderAdapterTest {
 
         StepVerifier.create(vonageSenderAdapter.send(notificationData))
                 .expectErrorMatches(error ->
-                        error instanceof IllegalStateException &&
-                                error.getMessage().equals("No fue posible enviar la notificación"))
+                        error instanceof DomainException &&
+                                ((DomainException) error).getCode() == DomainErrorCode.EXTERNAL_SERVICE_ERROR &&
+                                error.getMessage().equals(DomainErrorMessages.NOTIFICATION_SEND_ERROR))
                 .verify();
-
     }
 
     @Test

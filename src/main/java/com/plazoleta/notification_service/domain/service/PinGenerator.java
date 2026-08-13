@@ -1,7 +1,9 @@
 package com.plazoleta.notification_service.domain.service;
 
 
-import com.plazoleta.notification_service.domain.exception.InvalidPinException;
+import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
+import com.plazoleta.notification_service.domain.exception.DomainErrorMessages;
+import com.plazoleta.notification_service.domain.exception.DomainException;
 
 import java.security.SecureRandom;
 
@@ -32,7 +34,10 @@ public final class PinGenerator {
 
     private static void validateLength(int length) {
         if (length < MIN_PIN_LENGTH || length > MAX_PIN_LENGTH) {
-            throw new InvalidPinException(MIN_PIN_LENGTH, MAX_PIN_LENGTH);
+            throw new DomainException(
+                    DomainErrorCode.VALIDATION_ERROR,
+                    DomainErrorMessages.PIN_LENGTH_INVALID
+            );
         }
     }
 }

@@ -1,9 +1,7 @@
 package com.plazoleta.notification_service.infrastructure.input.rest;
 
-import com.plazoleta.notification_service.domain.exception.InvalidPinException;
-import com.plazoleta.notification_service.domain.exception.InvalidTokenException;
-import com.plazoleta.notification_service.domain.exception.PinStorageException;
-import com.plazoleta.notification_service.domain.exception.UnauthorizedRoleException;
+import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
+import com.plazoleta.notification_service.domain.exception.DomainException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -19,24 +17,10 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidToken(InvalidTokenException ex, ServerWebExchange exchange) {
-        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), exchange, List.of());
-    }
-
-    @ExceptionHandler(UnauthorizedRoleException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorizedRole(UnauthorizedRoleException ex, ServerWebExchange exchange) {
-        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), exchange, List.of());
-    }
-
-    @ExceptionHandler({PinStorageException.class})
-    public ResponseEntity<ErrorResponse> handlePinStorageError(PinStorageException ex, ServerWebExchange exchange) {
-        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), exchange, List.of());
-    }
-
-    @ExceptionHandler({InvalidPinException.class})
-    public ResponseEntity<ErrorResponse> handleInvalidPinError(InvalidPinException ex, ServerWebExchange exchange) {
-        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), exchange, List.of());
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex, ServerWebExchange exchange) {
+        HttpStatus status = mapStatus(ex.getCode());
+        return buildResponse(status, ex.getMessage(), exchange, List.of());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -57,6 +41,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, ServerWebExchange exchange) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error interno en el servidor", exchange, List.of());
+    }
+
+    private HttpStatus mapStatus(DomainErrorCode code) {
+        return switch (code) {
+            case VALIDATION_ERROR -> HttpStatus.BAD_REQUEST;
+            case INVALID_TOKEN -> HttpStatus.UNAUTHORIZED;
+            case ACCESS_DENIED -> HttpStatus.FORBIDDEN;
+            case STORAGE_ERROR -> HttpStatus.SERVICE_UNAVAILABLE;
+            case EXTERNAL_SERVICE_ERROR -> HttpStatus.BAD_GATEWAY;
+            case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
+        };
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(

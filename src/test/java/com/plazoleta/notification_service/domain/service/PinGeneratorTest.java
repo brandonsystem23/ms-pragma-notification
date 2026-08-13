@@ -1,6 +1,8 @@
 package com.plazoleta.notification_service.domain.service;
 
-import com.plazoleta.notification_service.domain.exception.InvalidPinException;
+import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
+import com.plazoleta.notification_service.domain.exception.DomainErrorMessages;
+import com.plazoleta.notification_service.domain.exception.DomainException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,20 +19,23 @@ class PinGeneratorTest {
         assertTrue(pin.matches("\\d{6}"));
     }
 
-
     @Test
     void shouldThrowExceptionWhenLengthIsLessThanMinimum() {
-        assertThrows(
-                InvalidPinException.class, () -> new PinGenerator(3)
+        DomainException exception = assertThrows(
+                DomainException.class, () -> new PinGenerator(3)
         );
 
+        assertEquals(DomainErrorCode.VALIDATION_ERROR, exception.getCode());
+        assertEquals(DomainErrorMessages.PIN_LENGTH_INVALID, exception.getMessage());
     }
 
     @Test
     void shouldThrowExceptionWhenLengthIsGreaterThanMaximum() {
-        assertThrows(
-                InvalidPinException.class, () -> new PinGenerator(7)
+        DomainException exception = assertThrows(
+                DomainException.class, () -> new PinGenerator(7)
         );
 
+        assertEquals(DomainErrorCode.VALIDATION_ERROR, exception.getCode());
+        assertEquals(DomainErrorMessages.PIN_LENGTH_INVALID, exception.getMessage());
     }
 }

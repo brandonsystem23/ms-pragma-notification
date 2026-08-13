@@ -1,5 +1,8 @@
 package com.plazoleta.notification_service.infrastructure.output.vonage;
 
+import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
+import com.plazoleta.notification_service.domain.exception.DomainErrorMessages;
+import com.plazoleta.notification_service.domain.exception.DomainException;
 import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.plazoleta.notification_service.domain.port.out.VonageSenderPort;
 import com.plazoleta.notification_service.infrastructure.util.Utils;
@@ -33,7 +36,7 @@ public class VonageSenderAdapter implements VonageSenderPort {
                                             .to(phone)
                                             .text(message)
                                             .build()
-                                    );
+                            );
                     log.info("SMS enviado correctamente. message_uuid: {}, destino: {}", response.getMessageUuid(), phone);
 
                     return response;
@@ -44,9 +47,11 @@ public class VonageSenderAdapter implements VonageSenderPort {
                         log.error("Error enviando SMS a {}: {}", phone, error.getMessage(), error)
                 )
                 .onErrorMap(error ->
-                        new IllegalStateException("No fue posible enviar la notificación")
+                        new DomainException(
+                                DomainErrorCode.EXTERNAL_SERVICE_ERROR,
+                                DomainErrorMessages.NOTIFICATION_SEND_ERROR
+                        )
                 )
                 .then();
     }
-
 }

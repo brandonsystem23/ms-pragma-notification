@@ -1,9 +1,7 @@
 package com.plazoleta.notification_service.infrastructure.input.rest;
 
-import com.plazoleta.notification_service.domain.exception.InvalidPinException;
-import com.plazoleta.notification_service.domain.exception.InvalidTokenException;
-import com.plazoleta.notification_service.domain.exception.PinStorageException;
-import com.plazoleta.notification_service.domain.exception.UnauthorizedRoleException;
+import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
+import com.plazoleta.notification_service.domain.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -23,7 +21,6 @@ import static org.mockito.Mockito.when;
 class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler handler;
-
     private ServerWebExchange exchange;
 
     @BeforeEach
@@ -35,9 +32,37 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void shouldHandleInvalidToken() {
+    void shouldHandleValidationDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleInvalidToken(new InvalidTokenException(), exchange);
+                handler.handleDomainException(
+                        new DomainException(
+                                DomainErrorCode.VALIDATION_ERROR,
+                                "El phone es obligatorio"
+                        ),
+                        exchange
+                );
+
+        ErrorResponse response = getBody(responseEntity);
+
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), response.status());
+        assertEquals("Bad Request", response.error());
+        assertEquals("El phone es obligatorio", response.message());
+        assertEquals("/api/v1/notifications/send", response.path());
+        assertNotNull(response.timestamp());
+        assertEquals(List.of(), response.details());
+    }
+
+    @Test
+    void shouldHandleInvalidTokenDomainException() {
+        ResponseEntity<ErrorResponse> responseEntity =
+                handler.handleDomainException(
+                        new DomainException(
+                                DomainErrorCode.INVALID_TOKEN,
+                                "Token inválido o expirado"
+                        ),
+                        exchange
+                );
 
         ErrorResponse response = getBody(responseEntity);
 
@@ -45,16 +70,18 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.UNAUTHORIZED.value(), response.status());
         assertEquals("Unauthorized", response.error());
         assertEquals("Token inválido o expirado", response.message());
-        assertEquals("/api/v1/notifications/send", response.path());
-        assertNotNull(response.timestamp());
-        assertNotNull(response.details());
-        assertTrue(response.details().isEmpty());
     }
 
     @Test
-    void shouldHandleUnauthorizedRole() {
+    void shouldHandleAccessDeniedDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleUnauthorizedRole(new UnauthorizedRoleException(), exchange);
+                handler.handleDomainException(
+                        new DomainException(
+                                DomainErrorCode.ACCESS_DENIED,
+                                "Solo un EMPLEADO puede enviar el PIN"
+                        ),
+                        exchange
+                );
 
         ErrorResponse response = getBody(responseEntity);
 
@@ -62,16 +89,18 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.FORBIDDEN.value(), response.status());
         assertEquals("Forbidden", response.error());
         assertEquals("Solo un EMPLEADO puede enviar el PIN", response.message());
-        assertEquals("/api/v1/notifications/send", response.path());
-        assertNotNull(response.timestamp());
-        assertNotNull(response.details());
-        assertTrue(response.details().isEmpty());
     }
 
     @Test
-    void shouldHandlePinStorageError() {
+    void shouldHandleStorageErrorDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handlePinStorageError(new PinStorageException(), exchange);
+                handler.handleDomainException(
+                        new DomainException(
+                                DomainErrorCode.STORAGE_ERROR,
+                                "No se pudo almacenar el PIN"
+                        ),
+                        exchange
+                );
 
         ErrorResponse response = getBody(responseEntity);
 
@@ -79,27 +108,44 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), response.status());
         assertEquals("Service Unavailable", response.error());
         assertEquals("No se pudo almacenar el PIN", response.message());
-        assertEquals("/api/v1/notifications/send", response.path());
-        assertNotNull(response.timestamp());
-        assertNotNull(response.details());
-        assertTrue(response.details().isEmpty());
     }
 
     @Test
-    void shouldHandleInvalidPinError() {
+    void shouldHandleExternalServiceDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleInvalidPinError(new InvalidPinException(4, 6), exchange);
+                handler.handleDomainException(
+                        new DomainException(
+                                DomainErrorCode.EXTERNAL_SERVICE_ERROR,
+                                "No fue posible enviar la notificación"
+                        ),
+                        exchange
+                );
 
         ErrorResponse response = getBody(responseEntity);
 
-        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-        assertEquals(HttpStatus.BAD_REQUEST.value(), response.status());
-        assertEquals("Bad Request", response.error());
-        assertEquals("La longitud del PIN dede ser entre 4 y 6", response.message());
-        assertEquals("/api/v1/notifications/send", response.path());
-        assertNotNull(response.timestamp());
-        assertNotNull(response.details());
-        assertTrue(response.details().isEmpty());
+        assertEquals(HttpStatus.BAD_GATEWAY, responseEntity.getStatusCode());
+        assertEquals(HttpStatus.BAD_GATEWAY.value(), response.status());
+        assertEquals("Bad Gateway", response.error());
+        assertEquals("No fue posible enviar la notificación", response.message());
+    }
+
+    @Test
+    void shouldHandleInternalErrorDomainException() {
+        ResponseEntity<ErrorResponse> responseEntity =
+                handler.handleDomainException(
+                        new DomainException(
+                                DomainErrorCode.INTERNAL_ERROR,
+                                "Ocurrió un error interno en el servidor"
+                        ),
+                        exchange
+                );
+
+        ErrorResponse response = getBody(responseEntity);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), response.status());
+        assertEquals("Internal Server Error", response.error());
+        assertEquals("Ocurrió un error interno en el servidor", response.message());
     }
 
     @Test
@@ -188,5 +234,4 @@ class GlobalExceptionHandlerTest {
         assertNotNull(body);
         return body;
     }
-
 }

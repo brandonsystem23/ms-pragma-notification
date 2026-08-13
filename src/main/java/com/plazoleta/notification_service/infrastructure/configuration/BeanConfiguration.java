@@ -2,6 +2,7 @@ package com.plazoleta.notification_service.infrastructure.configuration;
 
 import com.plazoleta.notification_service.domain.port.in.SendNotificationUseCase;
 import com.plazoleta.notification_service.domain.port.out.RedisPort;
+import com.plazoleta.notification_service.domain.service.DomainNotificationValidator;
 import com.plazoleta.notification_service.domain.service.PinGenerator;
 import com.plazoleta.notification_service.domain.service.SendNotificationService;
 import com.plazoleta.notification_service.infrastructure.output.vonage.VonageSenderAdapter;
@@ -20,15 +21,22 @@ public class BeanConfiguration {
     }
 
     @Bean
+    public DomainNotificationValidator domainNotificationValidator() {
+        return new DomainNotificationValidator();
+    }
+
+    @Bean
     public SendNotificationUseCase sendNotificationUseCase(
             RedisPort authSessionPort,
             VonageSenderAdapter twilioNotificationSenderAdapter,
-            PinGenerator pinGenerator
+            PinGenerator pinGenerator,
+            DomainNotificationValidator domainNotificationValidator
     ) {
         return new SendNotificationService(
                 authSessionPort,
                 twilioNotificationSenderAdapter,
-                pinGenerator
+                pinGenerator,
+                domainNotificationValidator
         );
     }
 
