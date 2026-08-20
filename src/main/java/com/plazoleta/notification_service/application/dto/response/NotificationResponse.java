@@ -5,7 +5,7 @@ import lombok.Builder;
 @Builder
 public record NotificationResponse(
 
-        String phone,
+        String phoneNumber,
 
         String message
 ) {

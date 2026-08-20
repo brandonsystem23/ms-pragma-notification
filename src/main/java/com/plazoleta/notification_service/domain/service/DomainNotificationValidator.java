@@ -9,22 +9,22 @@ public class DomainNotificationValidator {
     private static final int MAX_PHONE_LENGTH = 13;
     private static final String PHONE_REGEX = "^\\+?\\d+$";
 
-    public void validatePhone(String phone) {
-        if (phone == null || phone.isBlank()) {
+    public void validatePhone(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isBlank()) {
             throw new DomainException(
                     DomainErrorCode.VALIDATION_ERROR,
                     DomainErrorMessages.PHONE_REQUIRED
             );
         }
 
-        if (phone.length() > MAX_PHONE_LENGTH) {
+        if (phoneNumber.length() > MAX_PHONE_LENGTH) {
             throw new DomainException(
                     DomainErrorCode.VALIDATION_ERROR,
                     DomainErrorMessages.PHONE_MAX_LENGTH
             );
         }
 
-        if (!phone.matches(PHONE_REGEX)) {
+        if (!phoneNumber.matches(PHONE_REGEX)) {
             throw new DomainException(
                     DomainErrorCode.VALIDATION_ERROR,
                     DomainErrorMessages.PHONE_INVALID

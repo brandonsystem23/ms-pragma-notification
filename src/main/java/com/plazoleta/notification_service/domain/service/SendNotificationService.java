@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 public class SendNotificationService implements SendNotificationUseCase {
 
     private static final String EMPLOYEE_ROLE = "EMPLEADO";
+    private static final String SUCCESS_MESSAGE = "Notificación enviada correctamente";
 
     private final RedisPort redisPort;
     private final VonageSenderPort vonageSenderPort;
@@ -23,15 +24,15 @@ public class SendNotificationService implements SendNotificationUseCase {
     private final DomainNotificationValidator domainNotificationValidator;
 
     @Override
-    public Mono<Notification> send(String token, String phone) {
-        return Mono.fromRunnable(() -> domainNotificationValidator.validatePhone(phone))
+    public Mono<Notification> send(String token, String phoneNumber) {
+        return Mono.fromRunnable(() -> domainNotificationValidator.validatePhone(phoneNumber))
                 .then(Mono.defer(() -> redisPort.findByToken(token)))
                 .switchIfEmpty(Mono.error(new DomainException(
                         DomainErrorCode.INVALID_TOKEN,
                         DomainErrorMessages.TOKEN_INVALID
                 )))
                 .flatMap(session -> validateEmployeeRole(session)
-                        .then(Mono.defer(() -> generateStoreAndSend(phone, session.numberDocument()))));
+                        .then(Mono.defer(() -> generateStoreAndSend(phoneNumber, session.numberDocument()))));
     }
 
     private Mono<Void> validateEmployeeRole(AuthSession session) {
@@ -45,13 +46,13 @@ public class SendNotificationService implements SendNotificationUseCase {
     }
 
     private Mono<Notification> generateStoreAndSend(
-            String phone,
+            String phoneNumber,
             String numberDocument) {
 
         String pin = pinGenerator.generate();
 
         NotificationData notificationData = NotificationData.builder()
-                .phone(phone)
+                .phoneNumber(phoneNumber)
                 .pin(pin)
                 .build();
 
@@ -62,8 +63,8 @@ public class SendNotificationService implements SendNotificationUseCase {
                         DomainErrorMessages.PIN_STORAGE_ERROR
                 )))
                 .thenReturn(Notification.builder()
-                        .message("Notificación enviada correctamente")
-                        .phone(phone)
+                        .message(SUCCESS_MESSAGE)
+                        .phoneNumber(phoneNumber)
                         .build());
     }
 }
