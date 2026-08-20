@@ -22,7 +22,6 @@ class UtilsTest {
                 IllegalArgumentException.class,
                 () -> Utils.extract(null)
         );
-
     }
 
     @Test
@@ -30,23 +29,22 @@ class UtilsTest {
         assertThrows(
                 IllegalArgumentException.class, () -> Utils.extract("Basic abc123")
         );
-
     }
 
     @Test
     void shouldNormalizePhoneSuccessfully() {
-        String phone = "+573001234567";
+        String phoneNumber = "+573001234567";
 
-        String normalized = Utils.normalizePhone(phone);
+        String normalized = Utils.normalizePhone(phoneNumber);
 
         assertEquals("573001234567", normalized);
     }
 
     @Test
     void shouldReturnSamePhoneWhenItDoesNotContainPlus() {
-        String phone = "573001234567";
+        String phoneNumber = "573001234567";
 
-        String normalized = Utils.normalizePhone(phone);
+        String normalized = Utils.normalizePhone(phoneNumber);
 
         assertEquals("573001234567", normalized);
     }
@@ -56,6 +54,5 @@ class UtilsTest {
         assertThrows(
                 IllegalArgumentException.class, () -> Utils.normalizePhone(null)
         );
-
     }
 }

@@ -16,7 +16,7 @@ import reactor.test.StepVerifier;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class VonageSenderAdapterTest {
@@ -36,7 +36,7 @@ class VonageSenderAdapterTest {
     @Test
     void shouldSendNotificationSuccessfully() {
         NotificationData notificationData = NotificationData.builder()
-                .phone("+573001234567")
+                .phoneNumber("+573001234567")
                 .pin("123456")
                 .build();
 
@@ -45,13 +45,12 @@ class VonageSenderAdapterTest {
 
         StepVerifier.create(vonageSenderAdapter.send(notificationData))
                 .verifyComplete();
-
     }
 
     @Test
     void shouldReturnMappedErrorWhenVonageFails() {
         NotificationData notificationData = NotificationData.builder()
-                .phone("+573001234567")
+                .phoneNumber("+573001234567")
                 .pin("123456")
                 .build();
 
@@ -70,14 +69,12 @@ class VonageSenderAdapterTest {
     @Test
     void shouldReturnErrorWhenPhoneIsNull() {
         NotificationData notificationData = NotificationData.builder()
-                .phone(null)
+                .phoneNumber(null)
                 .pin("123456")
                 .build();
 
         assertThrows(
                 IllegalArgumentException.class, () -> vonageSenderAdapter.send(notificationData)
         );
-
-
     }
 }

@@ -18,7 +18,7 @@ public class NotificationApplicationService {
     public Mono<NotificationResponse> sendNotification(String token, SendNotificationRequest request) {
         return sendNotificationUseCase.send(
                 token,
-                request.phone()
+                request.phoneNumber()
         ).map(notificationDtoMapper::toResponse);
     }
 }

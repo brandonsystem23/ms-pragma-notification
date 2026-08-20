@@ -21,7 +21,7 @@ public class NotificationController {
     private final NotificationApplicationService notificationApplicationService;
 
     @PostMapping("/send")
-    @Operation(summary = "Enviar PIN", description = "Envia PIN por Twilio. Requiere rol EMPLEADO")
+    @Operation(summary = "Enviar PIN", description = "Envía PIN por Vonage. Requiere rol EMPLEADO")
     public Mono<NotificationResponse> sendNotification(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationHeader,
             @Valid @RequestBody SendNotificationRequest request

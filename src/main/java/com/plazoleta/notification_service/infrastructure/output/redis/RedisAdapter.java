@@ -2,6 +2,9 @@ package com.plazoleta.notification_service.infrastructure.output.redis;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
+import com.plazoleta.notification_service.domain.exception.DomainErrorMessages;
+import com.plazoleta.notification_service.domain.exception.DomainException;
 import com.plazoleta.notification_service.domain.model.AuthSession;
 import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.plazoleta.notification_service.domain.port.out.RedisPort;
@@ -38,15 +41,20 @@ public class RedisAdapter implements RedisPort {
                 .flatMap(json -> redisTemplate.opsForValue().set(key, json, expiration))
                 .flatMap(saved -> Boolean.TRUE.equals(saved)
                         ? Mono.just(pin)
-                        : Mono.error(new IllegalStateException("No se pudo almacenar el PIN en Redis")));
-
+                        : Mono.error(new DomainException(
+                        DomainErrorCode.STORAGE_ERROR,
+                        DomainErrorMessages.PIN_STORAGE_ERROR
+                )));
     }
 
     private Mono<String> serialize(NotificationData notificationData) {
         try {
             return Mono.just(objectMapper.writeValueAsString(notificationData));
         } catch (JsonProcessingException e) {
-            return Mono.error(new IllegalStateException("Error serializando el PIN", e));
+            return Mono.error(new DomainException(
+                    DomainErrorCode.STORAGE_ERROR,
+                    DomainErrorMessages.PIN_STORAGE_ERROR
+            ));
         }
     }
 
@@ -54,7 +62,10 @@ public class RedisAdapter implements RedisPort {
         try {
             return Mono.just(objectMapper.readValue(json, AuthSession.class));
         } catch (JsonProcessingException e) {
-            return Mono.error(new IllegalStateException("Error deserializando la sesión", e));
+            return Mono.error(new DomainException(
+                    DomainErrorCode.INTERNAL_ERROR,
+                    "Error deserializando la sesión"
+            ));
         }
     }
 }

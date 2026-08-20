@@ -28,19 +28,18 @@ class NotificationApplicationServiceTest {
     @InjectMocks
     private NotificationApplicationService notificationApplicationService;
 
-
     @Test
     void shouldSendNotificationAndMapResponse() {
         String token = "valid-token";
         SendNotificationRequest request = new SendNotificationRequest("+573001234567");
 
         Notification notification = Notification.builder()
-                .phone("+573001234567")
+                .phoneNumber("+573001234567")
                 .message("Notificación enviada correctamente")
                 .build();
 
         NotificationResponse response = NotificationResponse.builder()
-                .phone("+573001234567")
+                .phoneNumber("+573001234567")
                 .message("Notificación enviada correctamente")
                 .build();
 
@@ -50,14 +49,12 @@ class NotificationApplicationServiceTest {
         when(notificationDtoMapper.toResponse(any()))
                 .thenReturn(response);
 
-
         StepVerifier.create(notificationApplicationService.sendNotification(token, request))
                 .assertNext(actual -> {
-                    assertEquals(response.phone(), actual.phone());
+                    assertEquals(response.phoneNumber(), actual.phoneNumber());
                     assertEquals(response.message(), actual.message());
                 })
                 .verifyComplete();
-
     }
 
     @Test
@@ -73,6 +70,5 @@ class NotificationApplicationServiceTest {
                         error instanceof RuntimeException &&
                                 error.getMessage().equals("error"))
                 .verify();
-
     }
 }

@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -24,7 +25,6 @@ class NotificationControllerTest {
     @InjectMocks
     private NotificationController notificationController;
 
-
     @Test
     void shouldSendNotificationSuccessfully() {
         String authorizationHeader = "Bearer valid-token";
@@ -32,7 +32,7 @@ class NotificationControllerTest {
         SendNotificationRequest request = new SendNotificationRequest("+573001234567");
 
         NotificationResponse response = NotificationResponse.builder()
-                .phone("+573001234567")
+                .phoneNumber("+573001234567")
                 .message("Notificación enviada correctamente")
                 .build();
 
@@ -53,7 +53,6 @@ class NotificationControllerTest {
                 IllegalArgumentException.class,
                 () -> notificationController.sendNotification(authorizationHeader, request)
         );
-
     }
 
     @Test
@@ -64,13 +63,11 @@ class NotificationControllerTest {
                 IllegalArgumentException.class,
                 () -> notificationController.sendNotification(null, request)
         );
-
     }
 
     @Test
     void shouldPropagateErrorFromApplicationService() {
         String authorizationHeader = "Bearer valid-token";
-
         SendNotificationRequest request = new SendNotificationRequest("+573001234567");
 
         when(notificationApplicationService.sendNotification(anyString(), any()))
