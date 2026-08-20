@@ -15,12 +15,12 @@ public final class Utils {
         return authorizationHeader.substring(BEARER_PREFIX.length());
     }
 
-    public static String normalizePhone(String phone) {
+    public static String normalizePhone(String phoneNumber) {
 
-        if (phone == null) {
+        if (phoneNumber == null) {
             throw new IllegalArgumentException("El teléfono no puede ser null");
         }
 
-        return phone.replace("+", "");
+        return phoneNumber.replace("+", "");
     }
 }

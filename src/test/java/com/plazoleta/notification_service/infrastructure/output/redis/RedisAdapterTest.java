@@ -2,6 +2,7 @@ package com.plazoleta.notification_service.infrastructure.output.redis;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.plazoleta.notification_service.domain.exception.DomainException;
 import com.plazoleta.notification_service.domain.model.AuthSession;
 import com.plazoleta.notification_service.domain.model.NotificationData;
 import org.junit.jupiter.api.Assertions;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
+
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,16 +53,9 @@ class RedisAdapterTest {
                 .email("admin@test.com")
                 .build();
 
-        when(redisTemplate.opsForValue())
-                .thenReturn(valueOperations);
-
-        when(valueOperations.get(any()))
-                .thenReturn(Mono.just("{}"));
-
-        when(objectMapper.readValue(
-                anyString(),
-                eq(AuthSession.class)
-        )).thenReturn(session);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(any())).thenReturn(Mono.just("{}"));
+        when(objectMapper.readValue(anyString(), eq(AuthSession.class))).thenReturn(session);
 
         StepVerifier.create(redisAdapter.findByToken("test-token"))
                 .assertNext(found -> {
@@ -74,109 +69,88 @@ class RedisAdapterTest {
     @Test
     void shouldReturnEmptyWhenTokenDoesNotExist() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        String token = "missing-token";
-
         when(valueOperations.get(anyString())).thenReturn(Mono.empty());
 
-        StepVerifier.create(redisAdapter.findByToken(token))
+        StepVerifier.create(redisAdapter.findByToken("missing-token"))
                 .verifyComplete();
     }
 
     @Test
-    void shouldReturnErrorWhenDeserializationFails()
-            throws JsonProcessingException {
-
+    void shouldReturnDomainErrorWhenDeserializationFails() throws JsonProcessingException {
         JsonProcessingException exception =
                 new JsonProcessingException("Error de deserialización") {};
 
-        when(redisTemplate.opsForValue())
-                .thenReturn(valueOperations);
-
-        when(valueOperations.get(anyString()))
-                .thenReturn(Mono.just("{}"));
-
-        when(objectMapper.readValue(
-                anyString(),
-                eq(AuthSession.class)))
-                .thenThrow(exception);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(anyString())).thenReturn(Mono.just("{}"));
+        when(objectMapper.readValue(anyString(), eq(AuthSession.class))).thenThrow(exception);
 
         StepVerifier.create(redisAdapter.findByToken("test-token"))
                 .expectErrorMatches(error ->
-                        error instanceof IllegalStateException
-                                && error.getMessage().equals(
-                                "Error deserializando la sesión")
-                                && error.getCause() == exception)
+                        error instanceof DomainException &&
+                                error.getMessage().equals("Error deserializando la sesión"))
                 .verify();
     }
 
-
     @Test
     void shouldSaveNotificationDataSuccessfully() throws Exception {
-
         String pin = "123456";
-
         String documentNumber = "77019939";
 
         NotificationData notificationData = NotificationData.builder()
-                .phone("+573001234567")
+                .phoneNumber("+573001234567")
                 .pin(pin)
                 .build();
 
-        when(redisTemplate.opsForValue())
-                .thenReturn(valueOperations);
-
-        when(objectMapper.writeValueAsString(any()))
-                .thenReturn("{}");
-
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
         when(valueOperations.set(anyString(), anyString(), any(Duration.class)))
                 .thenReturn(Mono.just(true));
 
-        StepVerifier.create(redisAdapter.save(documentNumber, pin ,notificationData))
+        StepVerifier.create(redisAdapter.save(documentNumber, pin, notificationData))
                 .assertNext(Assertions::assertNotNull)
                 .verifyComplete();
-
     }
 
     @Test
-    void shouldReturnErrorWhenRedisDoesNotSavePin() throws Exception {
+    void shouldReturnDomainErrorWhenRedisDoesNotSavePin() throws Exception {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
         String numberDocument = "12345678";
         String pin = "123456";
         NotificationData notificationData = NotificationData.builder()
-                .phone("+573001234567")
+                .phoneNumber("+573001234567")
                 .pin(pin)
                 .build();
 
         when(objectMapper.writeValueAsString(any())).thenReturn("{}");
-
         when(valueOperations.set(anyString(), anyString(), any(Duration.class)))
                 .thenReturn(Mono.just(false));
 
         StepVerifier.create(redisAdapter.save(numberDocument, pin, notificationData))
                 .expectErrorMatches(error ->
-                        error instanceof IllegalStateException &&
-                                error.getMessage().equals("No se pudo almacenar el PIN en Redis"))
+                        error instanceof DomainException &&
+                                error.getMessage().equals("No se pudo almacenar el PIN"))
                 .verify();
     }
 
     @Test
-    void shouldReturnErrorWhenSerializationFails() throws Exception {
+    void shouldReturnDomainErrorWhenSerializationFails() throws Exception {
         String numberDocument = "12345678";
         String pin = "123456";
         NotificationData notificationData = NotificationData.builder()
-                .phone("+573001234567")
+                .phoneNumber("+573001234567")
                 .pin(pin)
                 .build();
+
         JsonProcessingException exception =
                 new JsonProcessingException("Error de serialización") {};
 
-        when(objectMapper.writeValueAsString(notificationData))
-                .thenThrow(exception);
+        when(objectMapper.writeValueAsString(notificationData)).thenThrow(exception);
 
         StepVerifier.create(redisAdapter.save(numberDocument, pin, notificationData))
                 .expectErrorMatches(error ->
-                        error instanceof IllegalStateException &&
-                                error.getMessage().equals("Error serializando el PIN"))
+                        error instanceof DomainException &&
+                                error.getMessage().equals("No se pudo almacenar el PIN"))
                 .verify();
     }
 }

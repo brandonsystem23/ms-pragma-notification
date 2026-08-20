@@ -20,31 +20,32 @@ import reactor.core.scheduler.Schedulers;
 @RequiredArgsConstructor
 public class VonageSenderAdapter implements VonageSenderPort {
 
+    private static final String FROM = "MiApp";
+    private static final String MESSAGE_TEMPLATE = "Recoge tu pedido con el PIN %s";
+
     private final VonageClient vonageClient;
 
     @Override
     public Mono<Void> send(NotificationData notificationData) {
 
-        String phone = Utils.normalizePhone(notificationData.phone());
-        String message = String.format("Recoge tu pedido con el PIN %s", notificationData.pin());
+        String phoneNumber = Utils.normalizePhone(notificationData.phoneNumber());
+        String message = String.format(MESSAGE_TEMPLATE, notificationData.pin());
 
         return Mono.fromCallable(() -> {
                     MessageResponse response = vonageClient.getMessagesClient()
                             .sendMessage(
                                     SmsTextRequest.builder()
-                                            .from("MiApp")
-                                            .to(phone)
+                                            .from(FROM)
+                                            .to(phoneNumber)
                                             .text(message)
                                             .build()
                             );
-                    log.info("SMS enviado correctamente. message_uuid: {}, destino: {}", response.getMessageUuid(), phone);
-
+                    log.info("SMS enviado correctamente. message_uuid: {}, destino: {}", response.getMessageUuid(), phoneNumber);
                     return response;
-
                 })
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnError(error ->
-                        log.error("Error enviando SMS a {}: {}", phone, error.getMessage(), error)
+                        log.error("Error enviando SMS a {}: {}", phoneNumber, error.getMessage(), error)
                 )
                 .onErrorMap(error ->
                         new DomainException(
