@@ -2,7 +2,7 @@ package com.plazoleta.notification_service.infrastructure.input.rest;
 
 import com.plazoleta.notification_service.application.dto.request.SendNotificationRequest;
 import com.plazoleta.notification_service.application.dto.response.NotificationResponse;
-import com.plazoleta.notification_service.application.service.NotificationApplicationService;
+import com.plazoleta.notification_service.application.handler.INotificationHandler;
 import com.plazoleta.notification_service.infrastructure.util.Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
 @Tag(name = "Notificación", description = "Endpoint para envio de PIN")
 public class NotificationController {
 
-    private final NotificationApplicationService notificationApplicationService;
+    private final INotificationHandler iNotificationHandler;
 
     @PostMapping("/send")
     @Operation(summary = "Enviar PIN", description = "Envía PIN por Vonage. Requiere rol EMPLEADO")
@@ -27,6 +27,6 @@ public class NotificationController {
             @Valid @RequestBody SendNotificationRequest request
     ) {
         String token = Utils.extract(authorizationHeader);
-        return notificationApplicationService.sendNotification(token, request);
+        return iNotificationHandler.sendNotification(token, request);
     }
 }
