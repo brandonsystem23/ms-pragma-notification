@@ -26,6 +26,6 @@ logging:
     root: INFO
 
 vonage:
-  api-key: ${VONAGE_API_KEY:0ecb883f}
-  api-secret: ${VONAGE_API_SECRET:W5eXGrQ%FQjkHN}
+  api-key: ${VONAGE_API_KEY:c9a67c0b}
+  api-secret: ${VONAGE_API_SECRET:7Dm^Niw%l26F}
 
