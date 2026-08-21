@@ -38,11 +38,11 @@ class SendNotificationUseCaseTest {
     @Mock
     private DomainNotificationValidator domainNotificationValidator;
 
-    private SendNotificationUseCase sendNotificationService;
+    private SendNotificationUseCase sendNotificationUseCase;
 
     @BeforeEach
     void setUp() {
-        sendNotificationService = new SendNotificationUseCase(
+        sendNotificationUseCase = new SendNotificationUseCase(
                 redisPort,
                 vonageSenderPort,
                 pinGenerator,
@@ -72,7 +72,7 @@ class SendNotificationUseCaseTest {
         when(vonageSenderPort.send(any())).thenReturn(Mono.empty());
         when(redisPort.save(anyString(), anyString(), any())).thenReturn(Mono.just(pin));
 
-        StepVerifier.create(sendNotificationService.send(token, phoneNumber))
+        StepVerifier.create(sendNotificationUseCase.send(token, phoneNumber))
                 .assertNext(notification -> {
                     assertEquals(phoneNumber, notification.phoneNumber());
                     assertEquals("Notificación enviada correctamente", notification.message());
@@ -90,7 +90,7 @@ class SendNotificationUseCaseTest {
                 DomainErrorMessages.PHONE_INVALID
         )).when(domainNotificationValidator).validatePhone(phoneNumber);
 
-        StepVerifier.create(sendNotificationService.send(token, phoneNumber))
+        StepVerifier.create(sendNotificationUseCase.send(token, phoneNumber))
                 .expectErrorMatches(error ->
                         error instanceof DomainException
                                 && ((DomainException) error).getCode() == DomainErrorCode.VALIDATION_ERROR
@@ -106,7 +106,7 @@ class SendNotificationUseCaseTest {
         doNothing().when(domainNotificationValidator).validatePhone(phoneNumber);
         when(redisPort.findByToken(anyString())).thenReturn(Mono.empty());
 
-        StepVerifier.create(sendNotificationService.send(token, phoneNumber))
+        StepVerifier.create(sendNotificationUseCase.send(token, phoneNumber))
                 .expectErrorMatches(error ->
                         error instanceof DomainException
                                 && ((DomainException) error).getCode() == DomainErrorCode.INVALID_TOKEN
@@ -131,7 +131,7 @@ class SendNotificationUseCaseTest {
         doNothing().when(domainNotificationValidator).validatePhone(phoneNumber);
         when(redisPort.findByToken(anyString())).thenReturn(Mono.just(session));
 
-        StepVerifier.create(sendNotificationService.send(token, phoneNumber))
+        StepVerifier.create(sendNotificationUseCase.send(token, phoneNumber))
                 .expectErrorMatches(error ->
                         error instanceof DomainException
                                 && ((DomainException) error).getCode() == DomainErrorCode.ACCESS_DENIED
@@ -161,7 +161,7 @@ class SendNotificationUseCaseTest {
         when(vonageSenderPort.send(any())).thenReturn(Mono.empty());
         when(redisPort.save(anyString(), anyString(), any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(sendNotificationService.send(token, phoneNumber))
+        StepVerifier.create(sendNotificationUseCase.send(token, phoneNumber))
                 .expectErrorMatches(error ->
                         error instanceof DomainException
                                 && ((DomainException) error).getCode() == DomainErrorCode.STORAGE_ERROR
@@ -194,7 +194,7 @@ class SendNotificationUseCaseTest {
                         DomainErrorMessages.NOTIFICATION_SEND_ERROR
                 )));
 
-        StepVerifier.create(sendNotificationService.send(token, phoneNumber))
+        StepVerifier.create(sendNotificationUseCase.send(token, phoneNumber))
                 .expectErrorMatches(error ->
                         error instanceof DomainException
                                 && ((DomainException) error).getCode() == DomainErrorCode.EXTERNAL_SERVICE_ERROR
