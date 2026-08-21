@@ -2,7 +2,7 @@ package com.plazoleta.notification_service.infrastructure.input.rest;
 
 import com.plazoleta.notification_service.application.dto.request.SendNotificationRequest;
 import com.plazoleta.notification_service.application.dto.response.NotificationResponse;
-import com.plazoleta.notification_service.application.service.NotificationApplicationService;
+import com.plazoleta.notification_service.application.handler.INotificationHandler;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class NotificationControllerTest {
 
     @Mock
-    private NotificationApplicationService notificationApplicationService;
+    private INotificationHandler notificationApplicationService;
 
     @InjectMocks
     private NotificationController notificationController;
