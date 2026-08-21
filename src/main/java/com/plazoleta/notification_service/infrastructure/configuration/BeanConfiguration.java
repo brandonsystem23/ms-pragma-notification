@@ -1,11 +1,11 @@
 package com.plazoleta.notification_service.infrastructure.configuration;
 
-import com.plazoleta.notification_service.domain.port.in.SendNotificationUseCase;
-import com.plazoleta.notification_service.domain.port.out.RedisPort;
-import com.plazoleta.notification_service.domain.port.out.VonageSenderPort;
+import com.plazoleta.notification_service.domain.api.INotificationServicePort;
+import com.plazoleta.notification_service.domain.spi.INotificationCachePort;
+import com.plazoleta.notification_service.domain.spi.INotificationSenderPort;
 import com.plazoleta.notification_service.domain.service.DomainNotificationValidator;
 import com.plazoleta.notification_service.domain.service.PinGenerator;
-import com.plazoleta.notification_service.domain.service.SendNotificationService;
+import com.plazoleta.notification_service.domain.usecase.SendNotificationUseCase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,15 +26,15 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public SendNotificationUseCase sendNotificationUseCase(
-            RedisPort authSessionPort,
-            VonageSenderPort vonageSenderPort,
+    public INotificationServicePort sendNotificationUseCase(
+            INotificationCachePort iNotificationCachePort,
+            INotificationSenderPort iNotificationSenderPort,
             PinGenerator pinGenerator,
             DomainNotificationValidator domainNotificationValidator
     ) {
-        return new SendNotificationService(
-                authSessionPort,
-                vonageSenderPort,
+        return new SendNotificationUseCase(
+                iNotificationCachePort,
+                iNotificationSenderPort,
                 pinGenerator,
                 domainNotificationValidator
         );
