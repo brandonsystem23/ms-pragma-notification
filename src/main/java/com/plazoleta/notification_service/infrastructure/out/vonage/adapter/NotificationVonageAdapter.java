@@ -1,14 +1,9 @@
 package com.plazoleta.notification_service.infrastructure.out.vonage.adapter;
 
-import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
-import com.plazoleta.notification_service.domain.exception.DomainErrorMessages;
-import com.plazoleta.notification_service.domain.exception.DomainException;
 import com.plazoleta.notification_service.domain.model.NotificationData;
-import com.plazoleta.notification_service.infrastructure.out.redis.dto.NotificationRedisValue;
 import com.plazoleta.notification_service.domain.spi.INotificationSenderPort;
 import com.plazoleta.notification_service.infrastructure.util.Utils;
 import com.vonage.client.VonageClient;
-import com.vonage.client.messages.MessageResponse;
 import com.vonage.client.messages.sms.SmsTextRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,27 +27,23 @@ public class NotificationVonageAdapter implements INotificationSenderPort {
         String phoneNumber = Utils.normalizePhone(notificationData.phoneNumber());
         String message = String.format(MESSAGE_TEMPLATE, notificationData.pin());
 
-        return Mono.fromCallable(() -> {
-                    MessageResponse response = vonageClient.getMessagesClient()
-                            .sendMessage(
-                                    SmsTextRequest.builder()
-                                            .from(FROM)
-                                            .to(phoneNumber)
-                                            .text(message)
-                                            .build()
-                            );
-                    log.info("SMS enviado correctamente. message_uuid: {}, destino: {}", response.getMessageUuid(), phoneNumber);
-                    return response;
-                })
+        return Mono.defer(() ->
+                    Mono.just(vonageClient.getMessagesClient()
+                            .sendMessage(SmsTextRequest.builder()
+                                    .from(FROM)
+                                    .to(phoneNumber)
+                                    .text(message)
+                                    .build()))
+                )
                 .subscribeOn(Schedulers.boundedElastic())
+                .doOnNext(messageResponse ->
+                        log.info("SMS enviado correctamente. message_uuid: {}, destino: {}",
+                                messageResponse.getMessageUuid(), phoneNumber))
                 .doOnError(error ->
                         log.error("Error enviando SMS a {}: {}", phoneNumber, error.getMessage(), error)
                 )
                 .onErrorMap(error ->
-                        new DomainException(
-                                DomainErrorCode.EXTERNAL_SERVICE_ERROR,
-                                DomainErrorMessages.NOTIFICATION_SEND_ERROR
-                        )
+                        new RuntimeException("No fue posible enviar la notificación", error)
                 )
                 .then();
     }

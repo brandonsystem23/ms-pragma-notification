@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -15,6 +16,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/v1/notifications")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Notificación", description = "Endpoint para envio de PIN")
 public class NotificationController {
 
@@ -27,6 +29,7 @@ public class NotificationController {
             @Valid @RequestBody SendNotificationRequest request
     ) {
         String token = Utils.extract(authorizationHeader);
+        log.info("Solicitud de envio de notificacion SMS a {}", request.phoneNumber());
         return iNotificationHandler.sendNotification(token, request);
     }
 }

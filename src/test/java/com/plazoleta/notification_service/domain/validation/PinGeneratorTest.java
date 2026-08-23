@@ -1,4 +1,4 @@
-package com.plazoleta.notification_service.domain.service;
+package com.plazoleta.notification_service.domain.validation;
 
 import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
 import com.plazoleta.notification_service.domain.exception.DomainErrorMessages;

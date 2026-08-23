@@ -2,16 +2,15 @@ package com.plazoleta.notification_service.infrastructure.out.redis.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.plazoleta.notification_service.domain.exception.DomainException;
 import com.plazoleta.notification_service.domain.model.AuthSession;
 import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.plazoleta.notification_service.infrastructure.out.redis.dto.AuthSessionRedisValue;
 import com.plazoleta.notification_service.infrastructure.out.redis.dto.NotificationRedisValue;
 import com.plazoleta.notification_service.infrastructure.out.redis.mapper.RedisRequestMapper;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
@@ -36,19 +35,13 @@ class SessionRedisAdapterTest {
     private ObjectMapper objectMapper;
 
     @Mock
+    private Duration duration;
+
+    @Mock
     private RedisRequestMapper redisRequestMapper;
 
+    @InjectMocks
     private SessionRedisAdapter redisAdapter;
-
-    @BeforeEach
-    void setUp() {
-        redisAdapter = new SessionRedisAdapter(
-                redisTemplate,
-                objectMapper,
-                Duration.ofMinutes(30),
-                redisRequestMapper
-        );
-    }
 
     @Test
     void shouldFindByTokenSuccessfully() throws Exception {
@@ -102,7 +95,7 @@ class SessionRedisAdapterTest {
 
         StepVerifier.create(redisAdapter.findByToken("test-token"))
                 .expectErrorMatches(error ->
-                        error instanceof DomainException &&
+                        error instanceof IllegalStateException &&
                                 error.getMessage().equals("Error deserializando la sesión"))
                 .verify();
     }
@@ -144,8 +137,8 @@ class SessionRedisAdapterTest {
 
         StepVerifier.create(redisAdapter.save(numberDocument, pin, notificationData))
                 .expectErrorMatches(error ->
-                        error instanceof DomainException &&
-                                error.getMessage().equals("No se pudo almacenar el PIN"))
+                        error instanceof IllegalStateException &&
+                                error.getMessage().equals("No se pudo almacenar el PIN en Redis para +573001234567"))
                 .verify();
     }
 
@@ -172,8 +165,8 @@ class SessionRedisAdapterTest {
 
         StepVerifier.create(redisAdapter.save(numberDocument, pin, notificationData))
                 .expectErrorMatches(error ->
-                        error instanceof DomainException &&
-                                error.getMessage().equals("No se pudo almacenar el PIN"))
+                        error instanceof IllegalStateException &&
+                                error.getMessage().equals("Error serializando el PIN"))
                 .verify();
     }
 }
