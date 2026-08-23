@@ -4,13 +4,14 @@ import com.plazoleta.notification_service.domain.exception.DomainErrorCode;
 import com.plazoleta.notification_service.domain.exception.DomainErrorMessages;
 import com.plazoleta.notification_service.domain.exception.DomainException;
 import com.plazoleta.notification_service.domain.model.AuthSession;
-import com.plazoleta.notification_service.domain.service.DomainNotificationValidator;
-import com.plazoleta.notification_service.domain.service.PinGenerator;
+import com.plazoleta.notification_service.domain.validation.DomainNotificationValidator;
+import com.plazoleta.notification_service.domain.validation.PinGenerator;
 import com.plazoleta.notification_service.domain.spi.INotificationCachePort;
 import com.plazoleta.notification_service.domain.spi.INotificationSenderPort;
-import org.junit.jupiter.api.BeforeEach;
+import com.plazoleta.notification_service.domain.validation.SendNotificationValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
@@ -38,17 +39,12 @@ class SendNotificationUseCaseTest {
     @Mock
     private DomainNotificationValidator domainNotificationValidator;
 
+    @Mock
+    private SendNotificationValidator sendNotificationValidator;
+
+    @InjectMocks
     private SendNotificationUseCase sendNotificationUseCase;
 
-    @BeforeEach
-    void setUp() {
-        sendNotificationUseCase = new SendNotificationUseCase(
-                redisPort,
-                vonageSenderPort,
-                pinGenerator,
-                domainNotificationValidator
-        );
-    }
 
     @Test
     void shouldSendNotificationSuccessfully() {
@@ -67,10 +63,10 @@ class SendNotificationUseCaseTest {
                 .build();
 
         doNothing().when(domainNotificationValidator).validatePhone(phoneNumber);
-        when(redisPort.findByToken(anyString())).thenReturn(Mono.just(session));
         when(pinGenerator.generate()).thenReturn(pin);
         when(vonageSenderPort.send(any())).thenReturn(Mono.empty());
         when(redisPort.save(anyString(), anyString(), any())).thenReturn(Mono.just(pin));
+        when(sendNotificationValidator.validate(anyString())).thenReturn(Mono.just(session));
 
         StepVerifier.create(sendNotificationUseCase.send(token, phoneNumber))
                 .assertNext(notification -> {
@@ -104,7 +100,9 @@ class SendNotificationUseCaseTest {
         String phoneNumber = "+573001234567";
 
         doNothing().when(domainNotificationValidator).validatePhone(phoneNumber);
-        when(redisPort.findByToken(anyString())).thenReturn(Mono.empty());
+        when(sendNotificationValidator.validate(anyString())).thenThrow(new
+                DomainException(DomainErrorCode.INVALID_TOKEN, DomainErrorMessages.TOKEN_INVALID));
+
 
         StepVerifier.create(sendNotificationUseCase.send(token, phoneNumber))
                 .expectErrorMatches(error ->
@@ -119,17 +117,9 @@ class SendNotificationUseCaseTest {
         String token = "valid-token";
         String phoneNumber = "+573001234567";
 
-        AuthSession session = AuthSession.builder()
-                .userId(1L)
-                .fullName("Juan Perez")
-                .role("CLIENTE")
-                .numberDocument("12345678")
-                .phone(phoneNumber)
-                .email("juan@test.com")
-                .build();
-
         doNothing().when(domainNotificationValidator).validatePhone(phoneNumber);
-        when(redisPort.findByToken(anyString())).thenReturn(Mono.just(session));
+        when(sendNotificationValidator.validate(anyString())).thenThrow(new
+                DomainException(DomainErrorCode.ACCESS_DENIED, DomainErrorMessages.ROLE_NOT_ALLOWED));
 
         StepVerifier.create(sendNotificationUseCase.send(token, phoneNumber))
                 .expectErrorMatches(error ->
@@ -156,7 +146,7 @@ class SendNotificationUseCaseTest {
                 .build();
 
         doNothing().when(domainNotificationValidator).validatePhone(phoneNumber);
-        when(redisPort.findByToken(anyString())).thenReturn(Mono.just(session));
+        when(sendNotificationValidator.validate(anyString())).thenReturn(Mono.just(session));
         when(pinGenerator.generate()).thenReturn(pin);
         when(vonageSenderPort.send(any())).thenReturn(Mono.empty());
         when(redisPort.save(anyString(), anyString(), any())).thenReturn(Mono.empty());
@@ -186,7 +176,7 @@ class SendNotificationUseCaseTest {
                 .build();
 
         doNothing().when(domainNotificationValidator).validatePhone(phoneNumber);
-        when(redisPort.findByToken(anyString())).thenReturn(Mono.just(session));
+        when(sendNotificationValidator.validate(anyString())).thenReturn(Mono.just(session));
         when(pinGenerator.generate()).thenReturn(pin);
         when(vonageSenderPort.send(any()))
                 .thenReturn(Mono.error(new DomainException(

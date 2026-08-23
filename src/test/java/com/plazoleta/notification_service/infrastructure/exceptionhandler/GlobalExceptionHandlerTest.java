@@ -20,13 +20,13 @@ import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
 
-    private GlobalExceptionHandler handler;
-    private ServerWebExchange exchange;
+    private GlobalExceptionHandler globalExceptionHandler;
+    private ServerWebExchange serverWebExchange;
 
     @BeforeEach
     void setUp() {
-        handler = new GlobalExceptionHandler();
-        exchange = MockServerWebExchange.from(
+        globalExceptionHandler = new GlobalExceptionHandler();
+        serverWebExchange = MockServerWebExchange.from(
                 MockServerHttpRequest.get("/api/v1/notifications/send").build()
         );
     }
@@ -34,12 +34,12 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldHandleValidationDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleDomainException(
+                globalExceptionHandler.handleDomainException(
                         new DomainException(
                                 DomainErrorCode.VALIDATION_ERROR,
                                 "El phone es obligatorio"
                         ),
-                        exchange
+                        serverWebExchange
                 );
 
         ErrorResponse response = getBody(responseEntity);
@@ -56,12 +56,12 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldHandleInvalidTokenDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleDomainException(
+                globalExceptionHandler.handleDomainException(
                         new DomainException(
                                 DomainErrorCode.INVALID_TOKEN,
                                 "Token inválido o expirado"
                         ),
-                        exchange
+                        serverWebExchange
                 );
 
         ErrorResponse response = getBody(responseEntity);
@@ -75,12 +75,12 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldHandleAccessDeniedDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleDomainException(
+                globalExceptionHandler.handleDomainException(
                         new DomainException(
                                 DomainErrorCode.ACCESS_DENIED,
                                 "Solo un EMPLEADO puede enviar el PIN"
                         ),
-                        exchange
+                        serverWebExchange
                 );
 
         ErrorResponse response = getBody(responseEntity);
@@ -94,12 +94,12 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldHandleStorageErrorDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleDomainException(
+                globalExceptionHandler.handleDomainException(
                         new DomainException(
                                 DomainErrorCode.STORAGE_ERROR,
                                 "No se pudo almacenar el PIN"
                         ),
-                        exchange
+                        serverWebExchange
                 );
 
         ErrorResponse response = getBody(responseEntity);
@@ -113,12 +113,12 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldHandleExternalServiceDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleDomainException(
+                globalExceptionHandler.handleDomainException(
                         new DomainException(
                                 DomainErrorCode.EXTERNAL_SERVICE_ERROR,
                                 "No fue posible enviar la notificación"
                         ),
-                        exchange
+                        serverWebExchange
                 );
 
         ErrorResponse response = getBody(responseEntity);
@@ -132,12 +132,12 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldHandleInternalErrorDomainException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleDomainException(
+                globalExceptionHandler.handleDomainException(
                         new DomainException(
                                 DomainErrorCode.INTERNAL_ERROR,
                                 "Ocurrió un error interno en el servidor"
                         ),
-                        exchange
+                        serverWebExchange
                 );
 
         ErrorResponse response = getBody(responseEntity);
@@ -151,9 +151,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldHandleIllegalArgument() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleIllegalArgument(
+                globalExceptionHandler.handleIllegalArgument(
                         new IllegalArgumentException("Authorization header inválido"),
-                        exchange
+                        serverWebExchange
                 );
 
         ErrorResponse response = getBody(responseEntity);
@@ -171,9 +171,9 @@ class GlobalExceptionHandlerTest {
     @Test
     void shouldHandleGenericException() {
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleGeneric(
+                globalExceptionHandler.handleGeneric(
                         new RuntimeException("Error inesperado"),
-                        exchange
+                        serverWebExchange
                 );
 
         ErrorResponse response = getBody(responseEntity);
@@ -208,7 +208,7 @@ class GlobalExceptionHandlerTest {
                 .thenReturn(List.of(phoneRequiredError, phoneFormatError));
 
         ResponseEntity<ErrorResponse> responseEntity =
-                handler.handleValidationErrors(exception, exchange);
+                globalExceptionHandler.handleValidationErrors(exception, serverWebExchange);
 
         ErrorResponse response = getBody(responseEntity);
 
