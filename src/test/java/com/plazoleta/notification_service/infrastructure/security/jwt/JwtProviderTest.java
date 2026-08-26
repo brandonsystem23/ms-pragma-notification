@@ -1,7 +1,5 @@
-package com.plazoleta.notification_service.infrastructure.out.adapter;
+package com.plazoleta.notification_service.infrastructure.security.jwt;
 
-import com.plazoleta.notification_service.domain.model.AuthSession;
-import com.plazoleta.notification_service.infrastructure.out.jwt.adapter.JwtProviderAdapter;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -12,13 +10,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 
-class JwtProviderAdapterTest {
+class JwtProviderTest {
 
     @Test
     void shouldGenerateAndValidateTokenSuccessfully() {
         String secret = "my-super-secret-key-my-super-secret-key-123456";
 
-        JwtProviderAdapter adapter = new JwtProviderAdapter(secret);
+        JwtProvider adapter = new JwtProvider(secret);
         adapter.init();
 
         byte[] keyBytes = Decoders.BASE64.decode(
@@ -35,17 +33,8 @@ class JwtProviderAdapterTest {
                 .signWith(Keys.hmacShaKeyFor(keyBytes))
                 .compact();
 
-        AuthSession session = AuthSession.builder()
-                .userId(7L)
-                .fullName("Sofia Gomez")
-                .role("EMPLEADO")
-                .numberDocument("987654320")
-                .phone("+573004445566")
-                .email("sofia.gomez@plazoleta.com")
-                .build();
 
-
-        AuthSession decoded = adapter.validateAndGetUser(token);
+        AuthenticatedUser decoded = adapter.validateAndGetUser(token);
 
         Assertions.assertEquals(7L, decoded.userId());
         Assertions.assertEquals("Sofia Gomez", decoded.fullName());
@@ -59,7 +48,7 @@ class JwtProviderAdapterTest {
     void shouldFailWhenTokenIsInvalid() {
         String secret = "my-super-secret-key-my-super-secret-key-123456";
 
-        JwtProviderAdapter adapter = new JwtProviderAdapter(secret);
+        JwtProvider adapter = new JwtProvider(secret);
         adapter.init();
 
         Assertions.assertThrows(Exception.class, () ->

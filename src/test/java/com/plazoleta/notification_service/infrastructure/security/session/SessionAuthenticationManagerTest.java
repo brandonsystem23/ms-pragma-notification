@@ -1,9 +1,7 @@
 package com.plazoleta.notification_service.infrastructure.security.session;
 
-import com.plazoleta.notification_service.domain.model.AuthSession;
-import com.plazoleta.notification_service.domain.spi.IJwtProviderPort;
-import com.plazoleta.notification_service.infrastructure.out.jwt.dto.AuthenticatedUser;
-import com.plazoleta.notification_service.infrastructure.out.jwt.mapper.AuthMapper;
+import com.plazoleta.notification_service.infrastructure.security.jwt.AuthenticatedUser;
+import com.plazoleta.notification_service.infrastructure.security.jwt.JwtProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +14,6 @@ import reactor.test.StepVerifier;
 
 import java.util.Objects;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -24,24 +21,13 @@ import static org.mockito.Mockito.when;
 class SessionAuthenticationManagerTest {
 
     @Mock
-    private IJwtProviderPort iJwtProviderPort;
-
-    @Mock
-    private AuthMapper authMapper;
+    private JwtProvider jwtProvider;
 
     @InjectMocks
     private SessionAuthenticationManager authenticationManager;
 
     @Test
     void shouldAuthenticateSuccessfully() {
-        AuthSession session = AuthSession.builder()
-                .userId(1L)
-                .fullName("Admin User")
-                .role("EMPLEADO")
-                .numberDocument("123456")
-                .phone("+573001112233")
-                .email("admin@test.com")
-                .build();
 
         AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
                 .userId(1L)
@@ -52,10 +38,9 @@ class SessionAuthenticationManagerTest {
                 .email("admin@test.com")
                 .build();
 
-        when(iJwtProviderPort.validateAndGetUser(anyString()))
-                .thenReturn(session);
+        when(jwtProvider.validateAndGetUser(anyString()))
+                .thenReturn(authenticatedUser);
 
-        when(authMapper.toDto(any())).thenReturn(authenticatedUser);
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(null, "jwt-token-123");
@@ -75,7 +60,7 @@ class SessionAuthenticationManagerTest {
 
     @Test
     void shouldFailWhenTokenIsInvalid() {
-        when(iJwtProviderPort.validateAndGetUser(anyString()))
+        when(jwtProvider.validateAndGetUser(anyString()))
                 .thenThrow(new RuntimeException("Token inválido"));
 
         UsernamePasswordAuthenticationToken authentication =

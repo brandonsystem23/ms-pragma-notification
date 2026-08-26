@@ -1,8 +1,7 @@
-package com.plazoleta.notification_service.infrastructure.out.jwt.adapter;
+package com.plazoleta.notification_service.infrastructure.security.jwt;
 
 
 import com.plazoleta.notification_service.domain.model.AuthSession;
-import com.plazoleta.notification_service.domain.spi.IJwtProviderPort;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -14,12 +13,12 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 
 @Component
-public class JwtProviderAdapter implements IJwtProviderPort {
+public class JwtProvider {
 
     private final String secret;
     private SecretKey secretKey;
 
-    public JwtProviderAdapter(@Value("${security.jwt.secret}") String secret) {
+    public JwtProvider(@Value("${security.jwt.secret}") String secret) {
         this.secret = secret;
     }
 
@@ -28,15 +27,14 @@ public class JwtProviderAdapter implements IJwtProviderPort {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    @Override
-    public AuthSession validateAndGetUser(String token) {
+    public AuthenticatedUser validateAndGetUser(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
 
-        return AuthSession.builder()
+        return AuthenticatedUser.builder()
                 .userId(claims.get("userId", Long.class))
                 .fullName(claims.get("fullName", String.class))
                 .role(claims.get("role", String.class))
