@@ -1,4 +1,4 @@
-package com.plazoleta.notification_service.infrastructure.out.jwt.dto;
+package com.plazoleta.notification_service.infrastructure.security.jwt;
 
 import lombok.Builder;
 

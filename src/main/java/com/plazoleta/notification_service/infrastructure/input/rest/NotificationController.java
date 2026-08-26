@@ -3,7 +3,7 @@ package com.plazoleta.notification_service.infrastructure.input.rest;
 import com.plazoleta.notification_service.application.dto.request.SendNotificationRequest;
 import com.plazoleta.notification_service.application.dto.response.NotificationResponse;
 import com.plazoleta.notification_service.application.handler.INotificationHandler;
-import com.plazoleta.notification_service.infrastructure.out.jwt.dto.AuthenticatedUser;
+import com.plazoleta.notification_service.infrastructure.security.jwt.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
