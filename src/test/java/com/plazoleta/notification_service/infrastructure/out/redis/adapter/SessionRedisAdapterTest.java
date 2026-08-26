@@ -2,9 +2,7 @@ package com.plazoleta.notification_service.infrastructure.out.redis.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.plazoleta.notification_service.domain.model.AuthSession;
 import com.plazoleta.notification_service.domain.model.NotificationData;
-import com.plazoleta.notification_service.infrastructure.out.redis.dto.AuthSessionRedisValue;
 import com.plazoleta.notification_service.infrastructure.out.redis.dto.NotificationRedisValue;
 import com.plazoleta.notification_service.infrastructure.out.redis.mapper.RedisRequestMapper;
 import org.junit.jupiter.api.Assertions;
@@ -43,62 +41,6 @@ class SessionRedisAdapterTest {
     @InjectMocks
     private SessionRedisAdapter redisAdapter;
 
-    @Test
-    void shouldFindByTokenSuccessfully() throws Exception {
-        AuthSessionRedisValue session = AuthSessionRedisValue.builder()
-                .userId(1L)
-                .role("EMPLEADO")
-                .numberDocument("123456")
-                .phone("+573001112233")
-                .email("admin@test.com")
-                .build();
-
-        AuthSession authSession = AuthSession.builder()
-                .userId(1L)
-                .role("EMPLEADO")
-                .numberDocument("123456")
-                .phone("+573001112233")
-                .email("admin@test.com")
-                .build();
-
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(any())).thenReturn(Mono.just("{}"));
-        when(objectMapper.readValue(anyString(), eq(AuthSessionRedisValue.class))).thenReturn(session);
-        when(redisRequestMapper.toDomain(any())).thenReturn(authSession);
-
-        StepVerifier.create(redisAdapter.findByToken("test-token"))
-                .assertNext(found -> {
-                    Assertions.assertEquals(1L, found.userId());
-                    Assertions.assertEquals("EMPLEADO", found.role());
-                    Assertions.assertEquals("123456", found.numberDocument());
-                })
-                .verifyComplete();
-    }
-
-    @Test
-    void shouldReturnEmptyWhenTokenDoesNotExist() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(anyString())).thenReturn(Mono.empty());
-
-        StepVerifier.create(redisAdapter.findByToken("missing-token"))
-                .verifyComplete();
-    }
-
-    @Test
-    void shouldReturnDomainErrorWhenDeserializationFails() throws JsonProcessingException {
-        JsonProcessingException exception =
-                new JsonProcessingException("Error de deserialización") {};
-
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get(anyString())).thenReturn(Mono.just("{}"));
-        when(objectMapper.readValue(anyString(), eq(AuthSessionRedisValue.class))).thenThrow(exception);
-
-        StepVerifier.create(redisAdapter.findByToken("test-token"))
-                .expectErrorMatches(error ->
-                        error instanceof IllegalStateException &&
-                                error.getMessage().equals("Error deserializando la sesión"))
-                .verify();
-    }
 
     @Test
     void shouldSaveNotificationDataSuccessfully() throws Exception {

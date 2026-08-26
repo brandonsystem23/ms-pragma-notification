@@ -2,11 +2,9 @@ package com.plazoleta.notification_service.infrastructure.out.redis.adapter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.plazoleta.notification_service.domain.model.AuthSession;
 import com.plazoleta.notification_service.domain.model.NotificationData;
 import com.plazoleta.notification_service.infrastructure.out.redis.dto.NotificationRedisValue;
 import com.plazoleta.notification_service.domain.spi.INotificationCachePort;
-import com.plazoleta.notification_service.infrastructure.out.redis.dto.AuthSessionRedisValue;
 import com.plazoleta.notification_service.infrastructure.out.redis.mapper.RedisRequestMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +19,6 @@ import java.time.Duration;
 @Slf4j
 public class SessionRedisAdapter implements INotificationCachePort {
 
-    private static final String PREFIX = "auth:token:";
     private static final String PREFIX_MESSAGE = "notification:pin:";
 
     private final ReactiveStringRedisTemplate redisTemplate;
@@ -29,13 +26,6 @@ public class SessionRedisAdapter implements INotificationCachePort {
     private final Duration expiration;
     private final RedisRequestMapper redisRequestMapper;
 
-    @Override
-    public Mono<AuthSession> findByToken(String token) {
-        return redisTemplate.opsForValue()
-                .get(PREFIX + token)
-                .flatMap(this::deserialize)
-                .map(redisRequestMapper::toDomain);
-    }
 
     @Override
     public Mono<String> save(String numberDocument, String pin, NotificationData notificationData) {
@@ -66,11 +56,4 @@ public class SessionRedisAdapter implements INotificationCachePort {
         }
     }
 
-    private Mono<AuthSessionRedisValue> deserialize(String json) {
-        try {
-            return Mono.just(objectMapper.readValue(json, AuthSessionRedisValue.class));
-        } catch (JsonProcessingException e) {
-            return Mono.error(new IllegalStateException("Error deserializando la sesión", e));
-        }
-    }
 }

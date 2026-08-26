@@ -17,10 +17,10 @@ public class NotificationHandler implements INotificationHandler {
     private final NotificationDtoMapper notificationDtoMapper;
 
     @Override
-    public Mono<NotificationResponse> sendNotification(String token, SendNotificationRequest request) {
+    public Mono<NotificationResponse> sendNotification(SendNotificationRequest request, String numberDocument) {
         return iNotificationServicePort.send(
-                token,
-                request.phoneNumber()
+                request.phoneNumber(),
+                numberDocument
         ).map(notificationDtoMapper::toResponse);
     }
 }
