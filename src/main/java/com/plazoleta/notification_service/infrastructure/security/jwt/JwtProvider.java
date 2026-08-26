@@ -1,7 +1,5 @@
 package com.plazoleta.notification_service.infrastructure.security.jwt;
 
-
-import com.plazoleta.notification_service.domain.model.AuthSession;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
