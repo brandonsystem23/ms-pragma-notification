@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.plazoleta'
-version = '2.1.1'
+version = '2.2.0'
 
 java {
 	toolchain {
@@ -21,98 +21,66 @@ repositories {
 ext {
 	mapstructVersion = '1.6.3'
 	springdocVersion = '2.8.17'
+	jjwtVersion = '0.12.6'
 }
 
 dependencies {
 
-	// =========================
 	// WEBFLUX
-	// =========================
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-	// =========================
+	// SECURITY
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
 	// VALIDATION
-	// =========================
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-	// =========================
 	// MAPSTRUCT
-	// =========================
 	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
-
 	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
-	// =========================
 	// SWAGGER
-	// =========================
 	implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:${springdocVersion}") {
 		exclude group: 'org.apache.commons', module: 'commons-lang3'
 	}
 
 	implementation 'org.apache.commons:commons-lang3:3.18.0'
 
-	// =========================
+	// JWT
+	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+
 	// VONAGE
-	// =========================
 	implementation 'com.vonage:server-sdk:9.3.1'
 
-	// =========================
 	// REDIS REACTIVE
-	// =========================
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 
-	// =========================
 	// LOMBOK
-	// =========================
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
-	// =========================
-	// TEST
-	// =========================
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'io.projectreactor:reactor-test'
-
-	// Lombok para tests, si tienes clases Lombok dentro de src/test
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	// TEST
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
 }
-
-// =====================================================
-// LOMBOK + MAPSTRUCT
-// =====================================================
-
-dependencies {
-	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
-}
-
-// =====================================================
-// JAVA COMPILER
-// =====================================================
 
 tasks.withType(JavaCompile).configureEach {
 	options.compilerArgs += ['-parameters']
 }
 
-// =====================================================
-// TEST
-// =====================================================
-
 tasks.named('test') {
 	useJUnitPlatform()
 }
 
-// =====================================================
-// JACOCO
-// =====================================================
-
 jacoco {
 	toolVersion = '0.8.14'
 }
-
-// =====================================================
-// JACOCO - EXCLUSIONES
-// =====================================================
 
 def jacocoExclusions = [
 		'com/plazoleta/notification_service/NotificationServiceApplication*',
@@ -121,13 +89,10 @@ def jacocoExclusions = [
 		'com/plazoleta/notification_service/domain/model/**',
 		'com/plazoleta/notification_service/domain/port/**',
 		'com/plazoleta/notification_service/infrastructure/out/redis/dto/**',
-		'com/plazoleta/notification_service/infrastructure/out/redis/mapper/**'
-
+		'com/plazoleta/notification_service/infrastructure/out/redis/mapper/**',
+		'com/plazoleta/notification_service/infrastructure/out/jwt/mapper/**',
+		'com/plazoleta/notification_service/infrastructure/out/jwt/dto/**',
 ]
-
-// =====================================================
-// JACOCO REPORT
-// =====================================================
 
 tasks.named('jacocoTestReport') {
 	dependsOn tasks.test
@@ -145,11 +110,6 @@ tasks.named('jacocoTestReport') {
 	)
 }
 
-// =====================================================
-// JACOCO COVERAGE CHECK
-// Mínimo 95% de cobertura de líneas
-// =====================================================
-
 tasks.named('jacocoTestCoverageVerification') {
 	dependsOn tasks.test
 
@@ -162,7 +122,6 @@ tasks.named('jacocoTestCoverageVerification') {
 	violationRules {
 		rule {
 			element = 'BUNDLE'
-
 			limit {
 				counter = 'LINE'
 				value = 'COVEREDRATIO'
@@ -170,12 +129,7 @@ tasks.named('jacocoTestCoverageVerification') {
 			}
 		}
 	}
-
 }
-
-// =====================================================
-// VERIFY
-// =====================================================
 
 tasks.named('check') {
 	dependsOn tasks.named('jacocoTestCoverageVerification')
