@@ -21,11 +21,15 @@ notification:
     expiration-minutes: 30
     length: 6
 
+security:
+  jwt:
+    secret: ${JWT_SECRET:PragmaJwtSecret_2026_fK2mQ9xL7vN4pR6tY3wZ1aB5cD8eF0gH}
+
 logging:
   level:
     root: INFO
 
 vonage:
-  api-key: ${VONAGE_API_KEY:c9a67c0b}
-  api-secret: ${VONAGE_API_SECRET:7Dm^Niw%l26F}
+  api-key: ${VONAGE_API_KEY:fcf86937}
+  api-secret: ${VONAGE_API_SECRET:zQ)cxL77I(GPy7}
 

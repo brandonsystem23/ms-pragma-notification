@@ -6,5 +6,5 @@ import reactor.core.publisher.Mono;
 
 public interface INotificationHandler {
 
-    Mono<NotificationResponse> sendNotification(String token, SendNotificationRequest request);
+    Mono<NotificationResponse> sendNotification(SendNotificationRequest request, String numberDocument);
 }

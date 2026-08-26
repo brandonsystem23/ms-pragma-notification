@@ -7,30 +7,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class UtilsTest {
 
     @Test
-    void shouldExtractTokenSuccessfully() {
-        String header = "Bearer my-token";
-
-        String token = Utils.extract(header);
-
-        assertEquals("my-token", token);
-    }
-
-    @Test
-    void shouldThrowExceptionWhenAuthorizationHeaderIsNull() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> Utils.extract(null)
-        );
-    }
-
-    @Test
-    void shouldThrowExceptionWhenAuthorizationHeaderDoesNotStartWithBearer() {
-        assertThrows(
-                IllegalArgumentException.class, () -> Utils.extract("Basic abc123")
-        );
-    }
-
-    @Test
     void shouldNormalizePhoneSuccessfully() {
         String phoneNumber = "+573001234567";
 
