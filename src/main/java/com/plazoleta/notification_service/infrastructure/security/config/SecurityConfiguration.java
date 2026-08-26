@@ -1,9 +1,8 @@
 package com.plazoleta.notification_service.infrastructure.security.config;
 
-import com.plazoleta.notification_service.domain.spi.IJwtProviderPort;
-import com.plazoleta.notification_service.infrastructure.out.jwt.mapper.AuthMapper;
 import com.plazoleta.notification_service.infrastructure.security.handler.JsonAccessDeniedHandler;
 import com.plazoleta.notification_service.infrastructure.security.handler.JsonAuthenticationEntryPoint;
+import com.plazoleta.notification_service.infrastructure.security.jwt.JwtProvider;
 import com.plazoleta.notification_service.infrastructure.security.session.BearerTokenAuthenticationConverter;
 import com.plazoleta.notification_service.infrastructure.security.session.SessionAuthenticationManager;
 import lombok.RequiredArgsConstructor;
@@ -20,17 +19,16 @@ import org.springframework.security.web.server.util.matcher.ServerWebExchangeMat
 @RequiredArgsConstructor
 public class SecurityConfiguration {
 
-    private final IJwtProviderPort iJwtProviderPort;
+    private final JwtProvider jwtProvider;
     private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
     private final JsonAccessDeniedHandler jsonAccessDeniedHandler;
-    private final AuthMapper authMapper;
 
     @Bean
     SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
 
         AuthenticationWebFilter authenticationWebFilter =
                 new AuthenticationWebFilter(
-                        new SessionAuthenticationManager(iJwtProviderPort, authMapper)
+                        new SessionAuthenticationManager(jwtProvider)
                 );
 
         authenticationWebFilter.setServerAuthenticationConverter(
